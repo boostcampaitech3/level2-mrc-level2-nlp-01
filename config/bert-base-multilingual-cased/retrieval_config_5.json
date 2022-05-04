@@ -1,7 +1,7 @@
 {
     "retriever_path" : "",
     "config_retrieval": "./config/retrieval_config.json",
-    "vectorizer_type" : "TfidfVectorizer",
+    "vectorizer_type" : "BM25",
     "vectorizer_parameters" : {
             "ngram_range" : [1, 2]
     },

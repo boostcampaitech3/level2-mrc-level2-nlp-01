@@ -1,1 +1,1 @@
-from .utils_configs import read_json
+from .utils_configs import *
