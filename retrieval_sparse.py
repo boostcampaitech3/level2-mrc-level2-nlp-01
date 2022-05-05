@@ -79,6 +79,9 @@ class SparseRetrieval:
         self.indexer = None  # build_faiss()로 생성합니다.
         self.num_clusters = num_clusters
 
+        self.vectorizer_type = retrieval_type
+        self.tokenize_fn = tokenize_fn
+
         self.get_sparse_embedding(retrieval_path, retrieval_type, tokenize_fn, retrieval_parameters, output_path)
 
     def get_sparse_embedding(self, retriever_path, vectorizer_type, tokenize_fn, vectorizer_parameters, output_path) -> NoReturn:
@@ -99,7 +102,7 @@ class SparseRetrieval:
         if retriever_path:
             print(f'Initializing sparse retriever on {retriever_path}')
             emb_path = os.path.join(retriever_path, pickle_name)
-            vectorizer_path = os.path.join(self.data_path, vectorizer_name)
+            vectorizer_path = os.path.join(retriever_path, vectorizer_name)
 
             if os.path.isfile(emb_path) and os.path.isfile(vectorizer_path):
                 with open(emb_path, "rb") as file:
@@ -107,6 +110,9 @@ class SparseRetrieval:
                 with open(vectorizer_path, "rb") as file:
                     self.vectorizer = pickle.load(file)
                 print(f"Passage embedding & Sparse Vectorizer Loaded from {retriever_path}")
+            elif not os.path.isfile(emb_path) and os.path.isfile(vectorizer_path):
+                with open(vectorizer_path, "rb") as file:
+                    self.vectorizer = pickle.load(file)
         else:
             print(f'Initializing new sparse retriever. Please wait...')
             emb_path = os.path.join(output_path, pickle_name)
@@ -114,26 +120,31 @@ class SparseRetrieval:
 
             # Transform by vectorizer
             if hasattr(import_module("sklearn.feature_extraction.text"), vectorizer_type):
-                vectorizer_type = getattr(import_module("sklearn.feature_extraction.text"), vectorizer_type)
-                self.vectorizer = vectorizer_type(tokenizer=tokenize_fn, **vectorizer_parameters)
+                vectorizer_class = getattr(import_module("sklearn.feature_extraction.text"), vectorizer_type)
+                self.vectorizer = vectorizer_class(tokenizer=tokenize_fn, **vectorizer_parameters)
                 print(f'{self.vectorizer}')
 
             elif hasattr(import_module("retriever"), vectorizer_type):
-                vectorizer_type = getattr(import_module("retriever"), vectorizer_type)
-                self.vectorizer = vectorizer_type(tokenize_fn, vectorizer_parameters)
+                vectorizer_class = getattr(import_module("retriever"), vectorizer_type)
+                self.vectorizer = vectorizer_class(self.contexts, tokenize_fn)
                 print(f'{self.vectorizer}')
             else:
                 raise Exception(f"Use correct tokenizer type : Current tokenizer : {vectorizer_type}")
             print(f'Initializing retriever Complete : {self.vectorizer}')
 
             print("Build passage embedding. Please wait...")
-            self.p_embedding = self.vectorizer.fit_transform(self.contexts)
-            print(self.p_embedding.shape)
-            with open(emb_path, "wb") as file:
-                pickle.dump(self.p_embedding, file)
-            with open(vectorizer_path, "wb") as file:
-                pickle.dump(self.vectorizer, file)
-            print(f"Saving Passage embedding & Sparse Vectorizer to {output_path}")
+            if self.vectorizer_type == "TfidfVectorizer":
+                self.p_embedding = self.vectorizer.fit_transform(self.contexts)
+                print(self.p_embedding.shape)
+                with open(emb_path, "wb") as file:
+                    pickle.dump(self.p_embedding, file)
+                with open(vectorizer_path, "wb") as file:
+                    pickle.dump(self.vectorizer, file)
+                print(f"Saving Passage embedding & Sparse Vectorizer to {output_path}")
+            elif self.vectorizer_type == "BM25":
+                with open(vectorizer_path, "wb") as file:
+                    pickle.dump(self.vectorizer, file)
+                print(f"Saving Sparse Vectorizer to {output_path}")
 
 
     def build_faiss(self) -> NoReturn:
@@ -196,8 +207,8 @@ class SparseRetrieval:
                 Ground Truth가 있는 Query (train/valid) -> 기존 Ground Truth Passage를 같이 반환합니다.
                 Ground Truth가 없는 Query (test) -> Retrieval한 Passage만 반환합니다.
         """
-
-        assert self.p_embedding is not None, "get_sparse_embedding() 메소드를 먼저 수행해줘야합니다."
+        if self.vectorizer_type == 'TfidfVectorizer':
+            assert self.p_embedding is not None, "get_sparse_embedding() 메소드를 먼저 수행해줘야합니다."
 
         if isinstance(query_or_dataset, str):
             doc_scores, doc_indices = self.get_relevant_doc(query_or_dataset, k=topk)
@@ -276,22 +287,32 @@ class SparseRetrieval:
         Note:
             vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
         """
+        if self.vectorizer_type == "TfidfVectorizer":
+            with timer("transform"):
+                query_vec = self.vectorizer.transform([query])
+            assert (
+                np.sum(query_vec) != 0
+            ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
 
-        with timer("transform"):
-            query_vec = self.vectorizer.transform([query])
-        assert (
-            np.sum(query_vec) != 0
-        ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
+            with timer("query ex search"):
+                result = query_vec * self.p_embedding.T
+            if not isinstance(result, np.ndarray):
+                result = result.toarray()
 
-        with timer("query ex search"):
-            result = query_vec * self.p_embedding.T
-        if not isinstance(result, np.ndarray):
-            result = result.toarray()
+            sorted_result = np.argsort(result.squeeze())[::-1]
+            doc_score = result.squeeze()[sorted_result].tolist()[:k]
+            doc_indices = sorted_result.tolist()[:k]
+            return doc_score, doc_indices
 
-        sorted_result = np.argsort(result.squeeze())[::-1]
-        doc_score = result.squeeze()[sorted_result].tolist()[:k]
-        doc_indices = sorted_result.tolist()[:k]
-        return doc_score, doc_indices
+        if self.vectorizer_type == "BM25":
+            tokenized_query = self.vectorizer.tokenizer(query)
+            result = self.vectorizer.get_scores(tokenized_query)
+
+            sorted_result = np.argsort(result)[::-1]
+            doc_score = result[sorted_result].tolist()[:k]
+            doc_indices = sorted_result.tolist()[:k]
+            return doc_score, doc_indices
+
 
     def get_relevant_doc_bulk(
         self, queries: List, k: Optional[int] = 1
@@ -307,21 +328,33 @@ class SparseRetrieval:
             vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
         """
 
-        query_vec = self.vectorizer.transform(queries)
-        assert (
-            np.sum(query_vec) != 0
-        ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
+        if self.vectorizer_type == 'TfidfVectorizer':
+            query_vec = self.vectorizer.transform(queries)
+            assert (
+                np.sum(query_vec) != 0
+            ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
 
-        result = query_vec * self.p_embedding.T
-        if not isinstance(result, np.ndarray):
-            result = result.toarray()
-        doc_scores = []
-        doc_indices = []
-        for i in range(result.shape[0]):
-            sorted_result = np.argsort(result[i, :])[::-1]
-            doc_scores.append(result[i, :][sorted_result].tolist()[:k])
-            doc_indices.append(sorted_result.tolist()[:k])
-        return doc_scores, doc_indices
+            result = query_vec * self.p_embedding.T
+            if not isinstance(result, np.ndarray):
+                result = result.toarray()
+            doc_scores = []
+            doc_indices = []
+            for i in range(result.shape[0]):
+                sorted_result = np.argsort(result[i, :])[::-1]
+                doc_scores.append(result[i, :][sorted_result].tolist()[:k])
+                doc_indices.append(sorted_result.tolist()[:k])
+            return doc_scores, doc_indices
+
+        if self.vectorizer_type == 'BM25':
+            query_vec = [self.vectorizer.tokenizer(q) for q in queries]
+            doc_scores = []
+            doc_indices = []
+            for tokenized_query in tqdm(query_vec):
+                result_ = self.vectorizer.get_scores(tokenized_query)
+                sorted_result_ = np.argsort(result_)[::-1]
+                doc_scores.append(result_[sorted_result_].tolist()[:k])
+                doc_indices.append(sorted_result_.tolist()[:k])
+            return doc_scores, doc_indices
 
     def retrieve_faiss(
         self, query_or_dataset: Union[str, Dataset], topk: Optional[int] = 1
@@ -531,7 +564,7 @@ if __name__ == "__main__":
     else:
         raise Exception(f"Use correct tokenizer type - {args.tokenizer_type}")
     print(tokenizer)
-    # output_path directory = './retriever_result/{vectorizer}_{tokenizer}_{data}_{i}'
+
     #
     if args.tokenizer_type == "AutoTokenizer":
         output_path = args.output_path + f'/{args.vectorizer_type}_{args.model_name_or_path}_{args.context_path}'
