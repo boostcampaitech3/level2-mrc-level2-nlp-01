@@ -1,0 +1,17 @@
+{
+    "retriever_path" : "",
+    "config_retrieval": "./config/retrieval_config.json",
+    "vectorizer_type" : "BM25",
+    "vectorizer_parameters" : {
+            "ngram_range" : [1, 2]
+    },
+    "tokenizer_type" : "AutoTokenizer",
+    "model_name_or_path": "bert-base-multilingual-cased",
+    "top_k": 20,
+    "dataset_name": "../data/train_dataset",
+    "data_path": "../data",
+    "context_path": "wikipedia_documents.json",
+    "output_path": "./retriever_result",
+    "use_faiss": false,
+    "num_clusters" : 64
+}
