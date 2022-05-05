@@ -3,11 +3,14 @@ import os
 
 
 def run():
-    file_lst = ["./config/bert-base-multilingual-cased/retrieval_config_4.json",
-                "./config/bert-base-multilingual-cased/retrieval_config_5.json",
+    file_lst = ["./config/bert-base-multilingual-cased/retrieval_config_5.json",
                 "./config/bert-base-multilingual-cased/retrieval_config_6.json",
                 "./config/bert-base-multilingual-cased/retrieval_config_7.json",
                 "./config/bert-base-multilingual-cased/retrieval_config_8.json",
+                "./config/bert-base-multilingual-cased/retrieval_config_1.json",
+                "./config/bert-base-multilingual-cased/retrieval_config_2.json",
+                "./config/bert-base-multilingual-cased/retrieval_config_3.json",
+                "./config/bert-base-multilingual-cased/retrieval_config_4.json",
                 "./config/klue_roberta-large/retrieval_config_1.json",
                 "./config/klue_roberta-large/retrieval_config_2.json",
                 "./config/klue_roberta-large/retrieval_config_3.json",

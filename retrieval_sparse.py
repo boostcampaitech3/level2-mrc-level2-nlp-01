@@ -256,11 +256,15 @@ class SparseRetrieval:
                     answer_text_lst = example["answers"]["text"]
 
                     ctx_idx_lst = []
+                    check = 0
                     for answer in answer_text_lst:
                         for idx_, context in enumerate(context_lst):
+                            if tmp2["original_context"] == context:
+                                check = 1
                             if answer in context:
                                 ctx_idx_lst.append(idx_)
 
+                    tmp2["answer_exact_context"] = check
                     tmp2["answer_context"] = ctx_idx_lst
 
                     if len(ctx_idx_lst) > 0:
@@ -567,9 +571,9 @@ if __name__ == "__main__":
 
     #
     if args.tokenizer_type == "AutoTokenizer":
-        output_path = args.output_path + f'/{args.vectorizer_type}_{args.model_name_or_path}_{args.context_path}'
+        output_path = args.output_path + f'/{args.vectorizer_type}_{args.model_name_or_path}_{args.top_k}_{args.context_path}'
     else:
-        output_path = args.output_path + f'/{args.vectorizer_type}_{args.tokenizer_type}_{args.context_path}'
+        output_path = args.output_path + f'/{args.vectorizer_type}_{args.tokenizer_type}_{args.top_k}_{args.context_path}'
     output_path = utils.increment_directory(output_path)
     print(f'output_path directory: {output_path}')
 
@@ -606,8 +610,9 @@ if __name__ == "__main__":
     else:
         with timer("bulk query by exhaustive search"):
             df, result_dict = retriever.retrieve(full_ds, topk = args.top_k)
-            result = f'total documents : {len(df)} + answer_in_documents : {df["answers_in"].sum()} + accuracy : {df["answers_in"].sum()/len(df)}'
-            print(result)
+            result = f'total queries : {len(df)} + answer_in_documents : {df["answers_in"].sum()} + accuracy : {df["answers_in"].sum()/len(df)} \n'
+            result_2 = f'total queries : {len(df)} + exact_contenxt : {df["answer_exact_context"].sum()} + accuracy : {df["answer_exact_context"].sum() / len(df)}'
+            result += result_2
             result_txt = os.path.join(output_path, 'result.txt')
             with open(result_txt, "w") as f:
                 f.write(result)
