@@ -265,6 +265,7 @@ class SparseRetrieval:
                                 ctx_idx_lst.append(idx_)
 
                     tmp2["answer_exact_context"] = check
+                    tmp["answer_exact_context"] = check
                     tmp2["answer_context"] = ctx_idx_lst
 
                     if len(ctx_idx_lst) > 0:
