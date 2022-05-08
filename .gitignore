@@ -2,3 +2,5 @@
 .idea/
 dataset_dpr.pkl
 __pycache__
+output/
+ex.ipynb
