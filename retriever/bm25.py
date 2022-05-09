@@ -1,131 +1,298 @@
-import math
+import json
+import os
+import pickle
+import time
+from contextlib import contextmanager
+from typing import List, NoReturn, Optional, Tuple, Union
+
+import faiss
 import numpy as np
-from multiprocessing import Pool, cpu_count
+import pandas as pd
+from datasets import Dataset, concatenate_datasets, load_from_disk
+from sklearn.feature_extraction.text import TfidfVectorizer
+from tqdm.auto import tqdm
 
-"""
-All of these algorithms have been taken from the paper:
-Trotmam et al, Improvements to BM25 and Language Models Examined
-Here we implement all the BM25 variations mentioned. 
-"""
+import argparse
+from pprint import pprint
+import konlpy.tag
+from transformers import AutoTokenizer
+from importlib import import_module
+import json
+from collections import OrderedDict
 
-
-class BM25BASE:
-    def __init__(self, corpus, tokenizer=None):
-        self.corpus_size = 0
-        self.avgdl = 0
-        self.doc_freqs = []
-        self.idf = {}
-        self.doc_len = []
-        self.tokenizer = tokenizer
-
-        if tokenizer:
-            corpus = self._tokenize_corpus(corpus)
-
-        nd = self._initialize(corpus)
-        self._calc_idf(nd)
-
-    def _initialize(self, corpus):
-        nd = {}  # word -> number of documents with word
-        num_doc = 0
-        for document in corpus:
-            self.doc_len.append(len(document))
-            num_doc += len(document)
-
-            frequencies = {}
-            for word in document:
-                if word not in frequencies:
-                    frequencies[word] = 0
-                frequencies[word] += 1
-            self.doc_freqs.append(frequencies)
-
-            for word, freq in frequencies.items():
-                try:
-                    nd[word]+=1
-                except KeyError:
-                    nd[word] = 1
-
-            self.corpus_size += 1
-
-        self.avgdl = num_doc / self.corpus_size
-        return nd
-
-    def _tokenize_corpus(self, corpus):
-        pool = Pool(cpu_count())
-        tokenized_corpus = pool.map(self.tokenizer, corpus)
-        return tokenized_corpus
-
-    def _calc_idf(self, nd):
-        raise NotImplementedError()
-
-    def get_scores(self, query):
-        raise NotImplementedError()
-
-    def get_batch_scores(self, query, doc_ids):
-        raise NotImplementedError()
-
-    def get_top_n(self, query, documents, n=5):
-
-        assert self.corpus_size == len(documents), "The documents given don't match the index corpus!"
-
-        scores = self.get_scores(query)
-        top_n = np.argsort(scores)[::-1][:n]
-        return [documents[i] for i in top_n]
+@contextmanager
+def timer(name):
+    t0 = time.time()
+    yield
+    print(f"[{name}] done in {time.time() - t0:.3f} s")
 
 
-class BM25(BM25BASE):
-    def __init__(self, corpus, tokenizer=None, k1=1.5, b=0.75, epsilon=0.25):
+class BM25SparseRetrieval:
+    def __init__(
+        self,
+        tokenize_fn,
+        data_path: Optional[str] = "../data/",
+        context_path: Optional[str] = "wikipedia_documents.json",
+    ) -> NoReturn:
+
+        """
+        Arguments:
+            tokenize_fn:
+                기본 text를 tokenize해주는 함수입니다.
+                아래와 같은 함수들을 사용할 수 있습니다.
+                - lambda x: x.split(' ')
+                - Huggingface Tokenizer
+                - konlpy.tag의 Mecab
+            data_path:
+                데이터가 보관되어 있는 경로입니다.
+            context_path:
+                Passage들이 묶여있는 파일명입니다.
+            data_path/context_path가 존재해야합니다.
+        Summary:
+            Passage 파일을 불러오고 TfidfVectorizer를 선언하는 기능을 합니다.
+        """
+
+        self.data_path = data_path
+        with open(os.path.join(data_path, context_path), "r", encoding="utf-8") as f:
+            wiki = json.load(f)
+
+        self.contexts = list(
+            dict.fromkeys([v["text"] for v in wiki.values()])
+        )  # set 은 매번 순서가 바뀌므로
+        print(f"Lengths of unique contexts : {len(self.contexts)}")
+        self.ids = list(range(len(self.contexts)))
+
+        # Transform by vectorizerhttps://cypision.github.io/deep-learning/Text_Analysis_01_classification/
+        self.encoder = TfidfVectorizer(
+            tokenizer=tokenize_fn,
+            ngram_range=(1, 2),
+            max_features=50000,
+            use_idf = False,
+            norm = None
+        )
+        self.idf_encoder = TfidfVectorizer(
+            tokenizer=tokenize_fn,
+            ngram_range=(1, 2),
+            max_features=50000,
+            norm=None,
+            smooth_idf=False
+        )
+
+        self.p_embedding = None  # get_sparse_embedding()로 생성합니다
+        self.indexer = None  # build_faiss()로 생성합니다.
+        self.idf = None
+        self.k1 = None
+        self.b = None
+
+    def get_sparse_embedding(self) -> NoReturn:
+
+        """
+        Summary:
+            Passage Embedding을 만들고
+            TFIDF와 Embedding을 pickle로 저장합니다.
+            만약 미리 저장된 파일이 있으면 저장된 pickle을 불러옵니다.
+        """
+
+        # Pickle을 저장합니다.
+        pickle_name = f"sparse_embedding_bm25.bin"
+        encoder_name = f"encoder_bm25.bin"
+        idf_encoder_name = f"idf_encoder_bm25.bin"
+        idf_path_name = f"idf_path_bm25.bin"
+        emd_path = os.path.join(self.data_path, pickle_name)
+        encoder_path = os.path.join(self.data_path, encoder_name)
+        idf_encoder_path = os.path.join(self.data_path, idf_encoder_name)
+        idf_path = os.path.join(self.data_path, idf_path_name)
+
+        if (
+            os.path.isfile(emd_path)
+            and os.path.isfile(encoder_path)
+            and os.path.isfile(idf_encoder_path)
+            and os.path.isfile(idf_path)
+        ):
+            with open(emd_path, "rb") as file:
+                self.p_embedding = pickle.load(file)
+            with open(encoder_path, "rb") as file:
+                self.encoder = pickle.load(file)
+            with open(idf_encoder_path, "rb") as file:
+                self.idf_encoder = pickle.load(file)
+            with open(idf_path, "rb") as file:
+                self.idf = pickle.load(file)
+            print("Embedding pickle load.")
+        else:
+            print("Build passage embedding")
+            self.p_embedding = self.encoder.fit_transform(self.contexts)
+            self.idf_encoder.fit(self.contexts)
+            self.idf = self.idf_encoder.idf_
+            print(self.p_embedding.shape)
+            with open(idf_path, "wb") as f:
+                pickle.dump(self.idf, f)
+            with open(encoder_path, "wb") as f:
+                pickle.dump(self.encoder, f)
+            with open(emd_path, "wb") as file:
+                pickle.dump(self.p_embedding, file)
+            with open(idf_encoder_path, "wb") as file:
+                pickle.dump(self.idf_encoder, file)
+            print("Embedding pickle saved.")
+
+    def retrieve(
+        self, query_or_dataset: Union[str, Dataset], topk: Optional[int] = 1, k1 = 1.6, b = 0.75
+    ) -> Union[Tuple[List, List], pd.DataFrame]:
+
+        """
+        Arguments:
+            query_or_dataset (Union[str, Dataset]):
+                str이나 Dataset으로 이루어진 Query를 받습니다.
+                str 형태인 하나의 query만 받으면 `get_relevant_doc`을 통해 유사도를 구합니다.
+                Dataset 형태는 query를 포함한 HF.Dataset을 받습니다.
+                이 경우 `get_relevant_doc_bulk`를 통해 유사도를 구합니다.
+            topk (Optional[int], optional): Defaults to 1.
+                상위 몇 개의 passage를 사용할 것인지 지정합니다.
+        Returns:
+            1개의 Query를 받는 경우  -> Tuple(List, List)
+            다수의 Query를 받는 경우 -> pd.DataFrame: [description]
+        Note:
+            다수의 Query를 받는 경우,
+                Ground Truth가 있는 Query (train/valid) -> 기존 Ground Truth Passage를 같이 반환합니다.
+                Ground Truth가 없는 Query (test) -> Retrieval한 Passage만 반환합니다.
+        """
+
+        assert self.p_embedding is not None, "get_sparse_embedding() 메소드를 먼저 수행해줘야합니다."
+
         self.k1 = k1
         self.b = b
-        self.epsilon = epsilon
-        super().__init__(corpus, tokenizer)
 
-    def _calc_idf(self, nd):
-        """
-        Calculates frequencies of terms in documents and in corpus.
-        This algorithm sets a floor on the idf values to eps * average_idf
-        """
-        # collect idf sum to calculate an average idf for epsilon value
-        idf_sum = 0
-        # collect words with negative idf to set them a special epsilon value.
-        # idf can be negative if word is contained in more than half of documents
-        negative_idfs = []
-        for word, freq in nd.items():
-            idf = math.log(self.corpus_size - freq + 0.5) - math.log(freq + 0.5)
-            self.idf[word] = idf
-            idf_sum += idf
-            if idf < 0:
-                negative_idfs.append(word)
-        self.average_idf = idf_sum / len(self.idf)
+        if isinstance(query_or_dataset, str):
+            doc_scores, doc_indices = self.get_relevant_doc(query_or_dataset, k=topk)
+            print("[Search query]\n", query_or_dataset, "\n")
 
-        eps = self.epsilon * self.average_idf
-        for word in negative_idfs:
-            self.idf[word] = eps
+            for i in range(topk):
+                print(f"Top-{i+1} passage with score {doc_scores[i]:4f}")
+                print(self.contexts[doc_indices[i]])
 
-    def get_scores(self, query):
-        """
-        The ATIRE BM25 variant uses an idf function which uses a log(idf) score. To prevent negative idf scores,
-        this algorithm also adds a floor to the idf value of epsilon.
-        See [Trotman, A., X. Jia, M. Crane, Towards an Efficient and Effective Search Engine] for more info
-        :param query:
-        :return:
-        """
-        score = np.zeros(self.corpus_size)
-        doc_len = np.array(self.doc_len)
-        for q in query:
-            q_freq = np.array([(doc.get(q) or 0) for doc in self.doc_freqs])
-            score += (self.idf.get(q) or 0) * (q_freq * (self.k1 + 1) /
-                                               (q_freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)))
-        return score
+            return (doc_scores, [self.contexts[doc_indices[i]] for i in range(topk)])
 
-    def get_batch_scores(self, query, doc_ids):
+        elif isinstance(query_or_dataset, Dataset):
+
+            # Retrieve한 Passage를 pd.DataFrame으로 반환합니다.
+            total = []
+            with timer("query exhaustive search"):
+                doc_scores, doc_indices = self.get_relevant_doc_bulk(
+                    query_or_dataset["question"], k=topk
+                )
+            for idx, example in enumerate(
+                tqdm(query_or_dataset, desc="Sparse retrieval: ")
+            ):
+                tmp = {
+                    # Query와 해당 id를 반환합니다.
+                    "question": example["question"],
+                    "id": example["id"],
+                    # Retrieve한 Passage의 id, context를 반환합니다.
+                    "context_id": doc_indices[idx],
+                    "context": " ".join(
+                        [self.contexts[pid] for pid in doc_indices[idx]]
+                    ),
+                }
+                if "context" in example.keys() and "answers" in example.keys():
+                    # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
+                    tmp["original_context"] = example["context"]
+                    tmp["answers"] = example["answers"]
+                total.append(tmp)
+
+            cqas = pd.DataFrame(total)
+            return cqas
+
+    def get_relevant_doc(self, query: str, k: Optional[int] = 1) -> Tuple[List, List]:
+
         """
-        Calculate bm25 scores between query and subset of all docs
+        Arguments:
+            query (str):
+                하나의 Query를 받습니다.
+            k (Optional[int]): 1
+                상위 몇 개의 Passage를 반환할지 정합니다.
+        Note:
+            vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
         """
-        assert all(di < len(self.doc_freqs) for di in doc_ids)
-        score = np.zeros(len(doc_ids))
-        doc_len = np.array(self.doc_len)[doc_ids]
-        for q in query:
-            q_freq = np.array([(self.doc_freqs[di].get(q) or 0) for di in doc_ids])
-            score += (self.idf.get(q) or 0) * (q_freq * (self.k1 + 1) /
-                                               (q_freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)))
-        return score.tolist()
+        with timer("transform"):
+            query_vec = self.encoder.transform([query])
+        assert (
+            np.sum(query_vec) != 0
+        ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
+
+        with timer("query ex search"):
+            p_embedding = self.p_embedding.tocsc()
+            k1 = self.k1
+            b = self.b
+            len_p = np.zeros(len(self.contexts))
+            for idx, context in enumerate(self.contexts):
+                len_p[idx] = len(context)
+
+            avdl = np.mean(len_p)
+            p_emb_for_q = p_embedding[:, query_vec.indices]
+            denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
+
+            #idf = self.idf[None, query_vec.indices] - 1.0
+            idf = self.idf[None, query_vec.indices] - 1.0
+            numer = p_emb_for_q.multiply(np.broadcast_to(idf, p_emb_for_q.shape)) * (k1 + 1)
+            result = (numer / denom).sum(1).A1
+
+        if not isinstance(result, np.ndarray):
+            result = result.toarray()
+
+        sorted_result = np.argsort(result.squeeze())[::-1]
+        doc_score = result.squeeze()[sorted_result].tolist()[:k]
+        doc_indices = sorted_result.tolist()[:k]
+
+        return doc_score, doc_indices
+
+    def get_relevant_doc_bulk(
+        self, queries: List, k: Optional[int] = 1
+    ) -> Tuple[List, List]:
+
+        """
+        Arguments:
+            queries (List):
+                하나의 Query를 받습니다.
+            k (Optional[int]): 1
+                상위 몇 개의 Passage를 반환할지 정합니다.
+        Note:
+            vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
+        """
+        query_vecs = self.encoder.transform(queries)
+        assert (
+            np.sum(query_vecs) != 0
+        ), "오류가 발생했습니다. 이 오류는 보통 query에 vectorizer의 vocab에 없는 단어만 존재하는 경우 발생합니다."
+
+        doc_scores = []
+        doc_indices = []
+
+        p_embedding = self.p_embedding.tocsc()
+
+        self.results = []
+
+        for query_vec in tqdm(query_vecs):
+
+            k1 = self.k1
+            b = self.b
+            len_p = np.zeros(len(self.contexts))
+
+            for idx, context in enumerate(self.contexts):
+                len_p[idx] = len(context)
+
+            avdl = np.mean(len_p)
+            p_emb_for_q = p_embedding[:, query_vec.indices]
+            denom = p_emb_for_q + (k1 * (1 - b + b * len_p / avdl))[:, None]
+
+            idf = self.idf[None, query_vec.indices] - 1.0
+            numer = p_emb_for_q.multiply(np.broadcast_to(idf, p_emb_for_q.shape)) * (k1 + 1)
+            result = (numer / denom).sum(1).A1
+            #result = query_vec * self.p_embedding.T
+            if not isinstance(result, np.ndarray):
+                result = result.toarray()
+            sorted_result_idx = np.argsort(result)[::-1]
+            doc_score, doc_indice = result[sorted_result_idx].tolist()[:k], sorted_result_idx.tolist()[:k]
+            doc_scores.append(doc_score)
+            doc_indices.append(doc_indice)
+
+        return doc_scores,
+
+
