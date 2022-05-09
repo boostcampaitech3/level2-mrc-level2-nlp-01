@@ -123,6 +123,9 @@ def main():
     train_dataset = pd.concat([datasets1_train, datasets2_train, datasets3_train], ignore_index=True)
     valid_dataset = pd.concat([datasets1_valid, datasets2_valid, datasets3_valid], ignore_index=True)
 
+    train_dataset = train_dataset.sample(frac=1).reset_index(drop=True)
+    valid_dataset = valid_dataset.sample(frac=1).reset_index(drop=True)
+
     train_dataset = Dataset.from_pandas(train_dataset)
     valid_dataset = Dataset.from_pandas(valid_dataset)
 
