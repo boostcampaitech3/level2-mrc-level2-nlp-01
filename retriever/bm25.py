@@ -30,26 +30,44 @@ def timer(name):
 class BM25SparseRetrieval:
     def __init__(
         self,
-        tokenize_fn,
+        retrieval_path,
+        vectorizer_parameters,
+        tokenize_fn, 
+        output_path,
         data_path: Optional[str] = "../data/",
         context_path: Optional[str] = "wikipedia_documents.json",
+        num_clusters = 64
     ) -> NoReturn:
 
         """
         Arguments:
+            retrieval_path: 
+                이전 BM25SparseRetrieval 결과값이 저장되어 있는 경로입니다.
+                지정을 해주면 이전 결과값을 불러옵니다.
+                "" 이면 새롭게 BM25SparseRetrieval 생성합니다.
+
+            vectorizer_parameters:
+                BM25SparseRetrieval 의 parameter 값들입니다.
+            
             tokenize_fn:
                 기본 text를 tokenize해주는 함수입니다.
                 아래와 같은 함수들을 사용할 수 있습니다.
                 - lambda x: x.split(' ')
                 - Huggingface Tokenizer
                 - konlpy.tag의 Mecab
+
+            output_path:
+                결과를 저장하는 경입니다.
+            
             data_path:
                 데이터가 보관되어 있는 경로입니다.
+            
             context_path:
                 Passage들이 묶여있는 파일명입니다.
+            
             data_path/context_path가 존재해야합니다.
         Summary:
-            Passage 파일을 불러오고 TfidfVectorizer를 선언하는 기능을 합니다.
+            Passage 파일을 불러오고 BM25SparseRetrieval 선언하는 기능을 합니다.
         """
 
         self.data_path = data_path
@@ -62,53 +80,41 @@ class BM25SparseRetrieval:
         print(f"Lengths of unique contexts : {len(self.contexts)}")
         self.ids = list(range(len(self.contexts)))
 
-        # Transform by vectorizerhttps://cypision.github.io/deep-learning/Text_Analysis_01_classification/
-        self.encoder = TfidfVectorizer(
-            tokenizer=tokenize_fn,
-            ngram_range=(1, 2),
-            max_features=50000,
-            use_idf = False,
-            norm = None
-        )
-        self.idf_encoder = TfidfVectorizer(
-            tokenizer=tokenize_fn,
-            ngram_range=(1, 2),
-            max_features=50000,
-            norm=None,
-            smooth_idf=False
-        )
-
         self.p_embedding = None  # get_sparse_embedding()로 생성합니다
         self.indexer = None  # build_faiss()로 생성합니다.
+        self.num_clusters = num_clusters
+        self.tokenize_fn = tokenize_fn
         self.idf = None
         self.k1 = None
         self.b = None
 
-    def get_sparse_embedding(self) -> NoReturn:
+        self.get_sparse_embedding(retrieval_path, tokenize_fn, vectorizer_parameters, output_path)
+
+    def get_sparse_embedding(self, retrieval_path, tokenize_fn, vectorizer_parameters, output_path) -> NoReturn:
 
         """
         Summary:
-            Passage Embedding을 만들고
-            TFIDF와 Embedding을 pickle로 저장합니다.
-            만약 미리 저장된 파일이 있으면 저장된 pickle을 불러옵니다.
+            retriever_path 존재하면 해당 sparse retrieval loading
+            retriever_path 존재하지 않으면,
+                1) self.vectorizer 호출
+                2) Passage Embedding을 만들고
+                3) TFIDF와 Embedding을 pickle로 저장합니다.
         """
+
 
         # Pickle을 저장합니다.
         pickle_name = f"sparse_embedding_bm25.bin"
         encoder_name = f"encoder_bm25.bin"
         idf_encoder_name = f"idf_encoder_bm25.bin"
         idf_path_name = f"idf_path_bm25.bin"
-        emd_path = os.path.join(self.data_path, pickle_name)
-        encoder_path = os.path.join(self.data_path, encoder_name)
-        idf_encoder_path = os.path.join(self.data_path, idf_encoder_name)
-        idf_path = os.path.join(self.data_path, idf_path_name)
 
-        if (
-            os.path.isfile(emd_path)
-            and os.path.isfile(encoder_path)
-            and os.path.isfile(idf_encoder_path)
-            and os.path.isfile(idf_path)
-        ):
+        if retrieval_path:
+            print(f'Initializing sparse retriever on {retrieval_path}')
+            emd_path = os.path.join(retrieval_path, pickle_name)
+            encoder_path = os.path.join(retrieval_path, encoder_name)
+            idf_encoder_path = os.path.join(retrieval_path, idf_encoder_name)
+            idf_path = os.path.join(retrieval_path, idf_path_name)
+
             with open(emd_path, "rb") as file:
                 self.p_embedding = pickle.load(file)
             with open(encoder_path, "rb") as file:
@@ -117,13 +123,35 @@ class BM25SparseRetrieval:
                 self.idf_encoder = pickle.load(file)
             with open(idf_path, "rb") as file:
                 self.idf = pickle.load(file)
-            print("Embedding pickle load.")
+
         else:
-            print("Build passage embedding")
+            print(f'Initializing new sparse retriever. Please wait...')
+            emd_path = os.path.join(output_path, pickle_name)
+            encoder_path = os.path.join(output_path, encoder_name)
+            idf_encoder_path = os.path.join(output_path, idf_encoder_name)
+            idf_path = os.path.join(output_path, idf_path_name)
+
+            self.encoder = TfidfVectorizer(
+                tokenizer=tokenize_fn,
+                use_idf = False,
+                norm = None,
+                **vectorizer_parameters
+            )
+            self.idf_encoder = TfidfVectorizer(
+                tokenizer=tokenize_fn,
+                norm=None,
+                smooth_idf=False,
+                **vectorizer_parameters
+            )
+
+            print("Build sparse embedding. Please wait...")
+
             self.p_embedding = self.encoder.fit_transform(self.contexts)
             self.idf_encoder.fit(self.contexts)
             self.idf = self.idf_encoder.idf_
+
             print(self.p_embedding.shape)
+
             with open(idf_path, "wb") as f:
                 pickle.dump(self.idf, f)
             with open(encoder_path, "wb") as f:
@@ -132,7 +160,7 @@ class BM25SparseRetrieval:
                 pickle.dump(self.p_embedding, file)
             with open(idf_encoder_path, "wb") as file:
                 pickle.dump(self.idf_encoder, file)
-            print("Embedding pickle saved.")
+            print(f"Saving Passage embedding & Sparse Vectorizer on {output_path}")
 
     def retrieve(
         self, query_or_dataset: Union[str, Dataset], topk: Optional[int] = 1, k1 = 1.6, b = 0.75
@@ -175,6 +203,7 @@ class BM25SparseRetrieval:
 
             # Retrieve한 Passage를 pd.DataFrame으로 반환합니다.
             total = []
+            total_dict = OrderedDict()
             with timer("query exhaustive search"):
                 doc_scores, doc_indices = self.get_relevant_doc_bulk(
                     query_or_dataset["question"], k=topk
@@ -182,24 +211,58 @@ class BM25SparseRetrieval:
             for idx, example in enumerate(
                 tqdm(query_or_dataset, desc="Sparse retrieval: ")
             ):
+                context_lst = [self.contexts[pid] for pid in doc_indices[idx]]
                 tmp = {
                     # Query와 해당 id를 반환합니다.
                     "question": example["question"],
                     "id": example["id"],
                     # Retrieve한 Passage의 id, context를 반환합니다.
                     "context_id": doc_indices[idx],
-                    "context": " ".join(
-                        [self.contexts[pid] for pid in doc_indices[idx]]
-                    ),
+                    "scores": doc_scores[idx],
+                    "context_lst": context_lst
                 }
+                tmp2 = {
+                    "question": example["question"],
+                    "context_lst": context_lst,
+                    "scores": doc_scores[idx],
+                }
+
+                
                 if "context" in example.keys() and "answers" in example.keys():
                     # validation 데이터를 사용하면 ground_truth context와 answer도 반환합니다.
                     tmp["original_context"] = example["context"]
                     tmp["answers"] = example["answers"]
+
+                    tmp2["original_context"] = example["context"]
+                    tmp2["answers"] = example["answers"]
+
+                    answer_text_lst = example["answers"]["text"]
+
+                    ctx_idx_lst = []
+                    check = 0
+                    for answer in answer_text_lst:
+                        for idx_, context in enumerate(context_lst):
+                            if tmp2["original_context"] == context:
+                                check = 1
+                            if answer in context:
+                                ctx_idx_lst.append(idx_)
+                    tmp2["answer_exact_context"] = check
+                    tmp["answer_exact_context"] = check
+                    tmp2["answer_context"] = ctx_idx_lst
+
+                    if len(ctx_idx_lst) > 0:
+                        tmp["answers_in"] = 1
+                        tmp2["answer_in"] = 1
+                    else:
+                        tmp["answers_in"] = 0
+                        tmp2["answer_in"] = 0
+
                 total.append(tmp)
+                total_dict[idx] = tmp2
 
             cqas = pd.DataFrame(total)
-            return cqas
+            return cqas, total_dict
+            
 
     def get_relevant_doc(self, query: str, k: Optional[int] = 1) -> Tuple[List, List]:
 
@@ -293,6 +356,6 @@ class BM25SparseRetrieval:
             doc_scores.append(doc_score)
             doc_indices.append(doc_indice)
 
-        return doc_scores,
+        return doc_scores, doc_indices
 
 

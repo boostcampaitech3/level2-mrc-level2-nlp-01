@@ -153,7 +153,7 @@ if __name__ == "__main__":
             result = f'total queries : {len(df)} + answer_in_documents : {df["answers_in"].sum()} + accuracy : {df["answers_in"].sum()/len(df)} \n'
             result_2 = f'total queries : {len(df)} + exact_contenxt : {df["answer_exact_context"].sum()} + accuracy : {df["answer_exact_context"].sum() / len(df)}'
             result += result_2
-            print(f'result')
+            print(f'result : {result}')
             result_txt = os.path.join(output_path, 'result.txt')
             with open(result_txt, "w") as f:
                 f.write(result)

@@ -41,12 +41,23 @@ class TfidfSparseRetrieval:
 
         """
         Arguments:
+            retrieval_path: 
+                이전 TfidfSparseRetrieval 결과값이 저장되어 있는 경로입니다.
+                지정을 해주면 이전 결과값을 불러옵니다.
+                "" 이면 새롭게 TfidfSparseRetrieval를 생성합니다.
+            
+            vectorizer_parameters:
+                TfidfSparseRetrieval 의 parameter 값들입니다. 
+            
             tokenize_fn:
                 기본 text를 tokenize해주는 함수입니다.
                 아래와 같은 함수들을 사용할 수 있습니다.
                 - lambda x: x.split(' ')
                 - Huggingface Tokenizer
                 - konlpy.tag의 Mecab
+
+            output_path:
+                결과를 저장하는 경입니다.
 
             data_path:
                 데이터가 보관되어 있는 경로입니다.
@@ -57,7 +68,7 @@ class TfidfSparseRetrieval:
             data_path/context_path가 존재해야합니다.
 
         Summary:
-            Passage 파일을 불러오고 TfidfVectorizer를 선언하는 기능을 합니다.
+            Passage 파일을 불러오고 TfidfSparseRetrieval를 선언하는 기능을 합니다.
         """
 
         self.data_path = data_path
@@ -113,7 +124,7 @@ class TfidfSparseRetrieval:
             self.vectorizer = TfidfVectorizer(tokenizer=tokenize_fn, **vectorizer_parameters)
             print(f'{self.vectorizer}')
 
-            print("Build passage embedding. Please wait...")
+            print("Build sparse embedding. Please wait...")
             self.p_embedding = self.vectorizer.fit_transform(self.contexts)
             print(self.p_embedding.shape)
             with open(emb_path, "wb") as file:
