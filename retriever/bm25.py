@@ -33,7 +33,7 @@ class BM25SparseRetrieval:
         retrieval_path,
         vectorizer_parameters,
         tokenize_fn, 
-        output_path,
+        output_path = None,
         data_path: Optional[str] = "../data/",
         context_path: Optional[str] = "wikipedia_documents.json",
         num_clusters = 64
