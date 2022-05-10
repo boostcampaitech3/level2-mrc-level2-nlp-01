@@ -1,13 +1,16 @@
 import pandas as pd
 import pickle
+import json
 from typing import List
 from datasets import load_from_disk, Dataset, DatasetDict
 
 class PreprocessingForDPR:
-    def __init__(self, data_path: str, total_length: int):
+    def __init__(self, data_path: str, external_data_path: str, total_length: int):
         self.data_path = data_path
         self.total_length = total_length
         self.original_dataset = load_from_disk(self.data_path)
+        with open(external_data_path, 'rb') as f:
+            self.external_dataset = json.load(f)
     
     def make_dataframe_from_dataset(self):
         train_answers = []
@@ -54,6 +57,62 @@ class PreprocessingForDPR:
                                  'title' : valid_title, 'question' : valid_question})
         return self.train_df, self.valid_df
     
+    def make_dataframe_from_external_dataset(self):
+        train_answers = []
+        train_context = []
+        train_document_id = []
+        train_id = []
+        train_title = []
+        train_question = []
+
+        valid_answers = []
+        valid_context = []
+        valid_document_id = []
+        valid_id = []
+        valid_title = []
+        valid_question = []
+
+        external_dataset = self.external_dataset['data']
+
+        for idx, example in enumerate(external_dataset):
+            paragraphs = example['paragraphs'][0]
+            if len(paragraphs['qas'][0]['answers']) > 1:
+                print('fuck')
+                return
+            example_answer = paragraphs['qas'][0]['answers'][0]
+            example_answer['answer_start'] = [example_answer['answer_start']]
+            example_answer['text'] = [example_answer['text']]
+            train_answers.append(example_answer)
+            train_context.append(paragraphs['context'])
+            train_document_id.append(idx + 100000) # document_id가 따로 없음
+            train_id.append(paragraphs['qas'][0]['id'])
+            train_title.append(example['title'])
+            train_question.append(paragraphs['qas'][0]['question'])
+        
+        valid_answers = train_answers[:14000]
+        train_answers = train_answers[14000:]
+        valid_context = train_context[:14000]
+        train_context = train_context[14000:]
+        valid_document_id = train_document_id[:14000]
+        train_document_id = train_document_id[14000:]
+        valid_id = train_id[:14000]
+        train_id = train_id[14000:]
+        valid_title = train_title[:14000]
+        train_title = train_title[14000:]
+        valid_question = train_question[:14000]
+        train_question = train_question[14000:]
+        
+        new_train_context, new_train_answers = self.scale_answers_and_context(train_context, train_answers)
+        new_valid_context, new_valid_answers = self.scale_answers_and_context(valid_context, valid_answers)
+
+        self.external_train_df = pd.DataFrame({'answers' : new_train_answers, 'context' : new_train_context,
+                                 'document_id' : train_document_id, 'id' : train_id,
+                                 'title' : train_title, 'question' : train_question})
+        self.external_valid_df = pd.DataFrame({'answers' : new_valid_answers, 'context' : new_valid_context,
+                                 'document_id' : valid_document_id, 'id' : valid_id,
+                                 'title' : valid_title, 'question' : valid_question})
+        return self.external_train_df, self.external_valid_df
+    
     def scale_answers_and_context(self, context: List[str], answers: List[dict]):
         new_context = []
         new_answers = []
@@ -85,23 +144,28 @@ class PreprocessingForDPR:
         return new_context, new_answers
 
     def convert_Df_to_HfDataset(self):
-        train_dataset = Dataset.from_pandas(self.train_df)
-        valid_dataset = Dataset.from_pandas(self.valid_df)
+        integrated_train_df = pd.concat([self.train_df, self.external_train_df])
+        integrated_valid_df = pd.concat([self.valid_df, self.external_valid_df])
+        print(integrated_train_df)
+        train_dataset = Dataset.from_pandas(integrated_train_df)
+        valid_dataset = Dataset.from_pandas(integrated_valid_df)
         return train_dataset, valid_dataset
 
 if __name__ == '__main__':
     data_path = '/opt/ml/input/data/train_dataset'
-    preprocess = PreprocessingForDPR(data_path, 600)
+    external_data_path = '/opt/ml/input/data/ko_wiki_v1_squad.json'
+    preprocess = PreprocessingForDPR(data_path, external_data_path, 600)
     preprocess.make_dataframe_from_dataset()
+    preprocess.make_dataframe_from_external_dataset()
     train_dataset, valid_dataset = preprocess.convert_Df_to_HfDataset()
     datasets = DatasetDict({'train' : train_dataset, 'validation' : valid_dataset})
     print(type(train_dataset))
     print(type(valid_dataset))
     print(type(datasets))
     print(datasets)
-    with open('./dataset_dpr.pkl', 'wb') as f:
+    with open('./integrated_dataset_dpr.pkl', 'wb') as f:
         pickle.dump(datasets, f)
-    with open('./dataset_dpr.pkl', 'rb') as f:
+    with open('./integrated_dataset_dpr.pkl', 'rb') as f:
         d = pickle.load(f)
     print('Finished!')
     print(d)

@@ -27,15 +27,6 @@ import datasets
 import torch
 from DPR import BiEncoderNllLoss
 
-def compute_metrics(p: EvalPrediction):
-        predictions, label_ids = p
-        max_score, max_idxs = torch.max(predictions, 1) # top-1 score 및 index
-        q_num = len(predictions)
-        positive_idx_per_question = [i for i in range(q_num)]
-        correct_predictions_count = (max_idxs == torch.tensor(positive_idx_per_question).to(max_idxs.device)).sum()
-        answer_dict = {'correct_count' : correct_predictions_count}
-        return answer_dict
-
 # Bi-Encoder의 input을 만들기 위한 data
 @dataclass
 class DataCollatorWithPaddingForDPR:
@@ -72,7 +63,7 @@ class DataCollatorWithPaddingForDPR:
         passages_features = []
         batch = {}
         labels = []
-        for feature in features:
+        for label, feature in enumerate(features):
             passages_feature = {}
             question_feature = {}
             passages_feature['input_ids'] = feature.pop('passages_input_ids')
@@ -85,8 +76,17 @@ class DataCollatorWithPaddingForDPR:
 
             question_features.append(question_feature)
             passages_features.append(passages_feature)
-            labels.append(-1)
+            labels.append(label)
+            
         batch['labels'] = torch.tensor(labels)
+
+        if "label" in batch:
+            batch["labels"] = batch["label"]
+            del batch["label"]
+        if "label_ids" in batch:
+            batch["labels"] = batch["label_ids"]
+            del batch["label_ids"]
+
         question_batch = self.tokenizer.pad(
             question_features,
             padding=self.padding,
@@ -94,13 +94,6 @@ class DataCollatorWithPaddingForDPR:
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors="pt",
         )
-
-        if "label" in question_batch:
-            question_batch["labels"] = question_batch["label"]
-            del question_batch["label"]
-        if "label_ids" in question_batch:
-            question_batch["labels"] = question_batch["label_ids"]
-            del question_batch["label_ids"]
         
         passage_batch = self.tokenizer.pad(
             passages_features,
@@ -109,13 +102,6 @@ class DataCollatorWithPaddingForDPR:
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors="pt",
         )
-
-        if "label" in passage_batch:
-            passage_batch["labels"] = passage_batch["label"]
-            del passage_batch["label"]
-        if "label_ids" in passage_batch:
-            passage_batch["labels"] = passage_batch["label_ids"]
-            del passage_batch["label_ids"]
 
         for key in ['input_ids', 'token_type_ids', 'attention_mask']:
             batch['questions_' + key] = question_batch[key]

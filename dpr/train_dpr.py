@@ -204,6 +204,9 @@ def run_dpr(
         labels = np.array([i % batch_size for i in range(num_data)])
         predictions = np.argmax(logits, axis=-1)
         predictions
+        print(logits)
+        print(num_data, batch_size)
+        print(predictions)
         correct_predictions_count = (predictions == labels).sum()
         answer = {'accuracy' : correct_predictions_count / num_data, 'correct_count' : correct_predictions_count}
         return answer

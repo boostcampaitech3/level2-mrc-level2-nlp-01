@@ -92,3 +92,14 @@ class DataTrainingArguments:
     use_faiss: bool = field(
         default=False, metadata={"help": "Whether to build with faiss"}
     )
+
+@dataclass
+class InferenceArguments:
+    """
+    Inference를 위한 Argument들
+    """
+
+    checkpoint_path: Optional[str] = field(
+        default="./output/checkpoint-7400/pytorch_model.bin",
+        metadata={"help": "The name of the checkpoint to use."},
+    )
