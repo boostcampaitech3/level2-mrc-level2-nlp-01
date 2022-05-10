@@ -27,6 +27,13 @@ class ModelArguments:
         },
     )
 
+    retriever_path: Optional[str] = field(
+        default='./retriever_result/BM25_bert-base-multilingual-cased_20_wikipedia_documents.json_1',
+        metadata={
+            "help": "Pretrained Retriever Path"
+        },
+    )
+
 
 @dataclass
 class DataTrainingArguments:
