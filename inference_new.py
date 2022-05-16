@@ -36,8 +36,30 @@ from utils_qa import check_no_error, postprocess_qa_predictions
 import utils
 import os
 from importlib import import_module
+import re
+import unicodedata
 
 logger = logging.getLogger(__name__)
+
+def text_prerpocessing(text_data):
+    text_preprocessed = ' '.join(text_data.split('\n'))
+    text_preprocessed = re.sub(r'\\n', " ", text_preprocessed)
+    text_preprocessed = re.sub(r"[\s]{2,}", " ", text_preprocessed)
+    return text_preprocessed
+
+# 유리님
+# def preprocess(context: str) -> str:
+#     """
+#     \n, \n*, \n\n, \\n, \\, 날짜=2017-05-02 등의 문자열을 1 space로 치환합니다.
+#     """
+#     p = re.compile('(\\n)|(\\n\*)|(\\n\\n)|(\\\\n)|(\\\\)|(\w{2}=\d{4}-\d{2}-\d{2})')
+#     context = p.sub(" ", context)
+#     return context
+
+def post_processing(text_data):
+    # text_preprocessed = unicodedata.normalize('NFKC', text_data)
+    text_preprocessed = re.sub(r'[\"\'〈〉《》『』‘’≪≫「」<>『』“”＜＞]', "", text_data)
+    return text_preprocessed
 
 
 def main():
@@ -153,7 +175,10 @@ def run_sparse_retrieval(
         )
     else:
         df, total_dict = retriever.retrieve(datasets["validation"], topk=data_args.top_k_retrieval)
-        df['context'] = df['context_lst'].apply(lambda x: ' '.join([context_ for context_ in x]))
+        if data_args.text_preprocessing:
+            df['context'] = df['context_lst'].apply(lambda x: ' '.join([text_prerpocessing(context_) for context_ in x]))
+        else:
+            df['context'] = df['context_lst'].apply(lambda x: ' '.join([context_ for context_ in x]))
 
     # test data 에 대해선 정답이 없으므로 id question context 로만 데이터셋이 구성됩니다.
     if training_args.do_predict:
@@ -223,8 +248,8 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
-            # return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
             padding="max_length" if data_args.pad_to_max_length else False,
+            return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
         )
 
         # 길이가 긴 context가 등장할 경우 truncate를 진행해야하므로, 해당 데이터셋을 찾을 수 있도록 mapping 가능한 값이 필요합니다.
@@ -276,18 +301,30 @@ def run_mrc(
         training_args: TrainingArguments,
     ) -> EvalPrediction:
         # Post-processing: start logits과 end logits을 original context의 정답과 match시킵니다.
-        predictions = postprocess_qa_predictions(
-            examples=examples,
-            features=features,
-            predictions=predictions,
-            max_answer_length=data_args.max_answer_length,
-            output_dir=training_args.output_dir,
-        )
-        # Metric을 구할 수 있도록 Format을 맞춰줍니다.
-        formatted_predictions = [
-            {"id": k, "prediction_text": v} for k, v in predictions.items()
-        ]
+        if data_args.answer_postprocessing:
+            predictions = postprocess_qa_predictions(
+                post_process_answer_fn = post_processing,
+                examples=examples,
+                features=features,
+                predictions=predictions,
+                max_answer_length=data_args.max_answer_length,
+                output_dir=training_args.output_dir,
+            )
+        else:
+            predictions = postprocess_qa_predictions(
+                post_process_answer_fn=None,
+                examples=examples,
+                features=features,
+                predictions=predictions,
+                max_answer_length=data_args.max_answer_length,
+                output_dir=training_args.output_dir,
+            )
 
+        # Metric을 구할 수 있도록 Format을 맞춰줍니다.
+
+        formatted_predictions = [
+            {"id": k, "prediction_text": post_processing(v)} for k, v in predictions.items()
+        ]
         if training_args.do_predict:
             return formatted_predictions
         elif training_args.do_eval:
