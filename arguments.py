@@ -112,3 +112,9 @@ class DataTrainingArguments:
     use_faiss: bool = field(
         default=False, metadata={"help": "Whether to build with faiss"}
     )
+    ko_wiki: bool = field(
+        default=False, metadata={"help": "use additional ko_wiki"}
+    )
+    korquad: bool = field(
+        default=False, metadata={"help": "use additional korquad"}
+    )
