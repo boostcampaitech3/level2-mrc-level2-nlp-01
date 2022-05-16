@@ -1,0 +1,16 @@
+{
+    "output_dir" : "./output",
+    "dataset_name" : "./integrated_dataset_dpr.pkl",
+    "max_seq_length" : 512,
+    "evaluation_strategy" : "steps",
+    "eval_steps" : 100,
+    "logging_strategy" : "steps",
+    "logging_steps" : 100,
+    "do_train" : true,
+    "do_eval" : true,
+    "per_device_train_batch_size" : 8,
+    "gradient_accumulation_steps" : 8,
+    "load_best_model_at_end" : true,
+    "metric_for_best_model" : "accuracy",
+    "save_total_limit" : 5
+}

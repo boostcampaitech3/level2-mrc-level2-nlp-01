@@ -14,6 +14,21 @@ class ModelArguments:
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
     )
+
+    question_model_name_or_path: str = field(
+        default="klue/bert-base",
+        metadata={
+            "help": "Path to pretrained model or model identifier from huggingface.co/models"
+        },
+    )
+
+    passage_model_name_or_path: str = field(
+        default="klue/bert-base",
+        metadata={
+            "help": "Path to pretrained model or model identifier from huggingface.co/models"
+        },
+    )
+
     config_name: Optional[str] = field(
         default=None,
         metadata={
