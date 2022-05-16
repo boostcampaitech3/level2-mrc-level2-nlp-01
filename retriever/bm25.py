@@ -14,7 +14,7 @@ from tqdm.auto import tqdm
 
 import argparse
 from pprint import pprint
-import konlpy.tag
+# import konlpy.tag
 from transformers import AutoTokenizer
 from importlib import import_module
 import json

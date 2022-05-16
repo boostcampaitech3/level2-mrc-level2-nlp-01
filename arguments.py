@@ -34,6 +34,13 @@ class ModelArguments:
         },
     )
 
+    index_name: Optional[str] = field(
+        default='wikipedia_documents',
+        metadata={
+            "help": "Pretrained Retriever Path"
+        },
+    )
+
 
 @dataclass
 class DataTrainingArguments:
@@ -96,4 +103,18 @@ class DataTrainingArguments:
     )
     use_faiss: bool = field(
         default=False, metadata={"help": "Whether to build with faiss"}
+    )
+    text_preprocessing: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether to preprocessing text data before reader module"
+                    "If True, text preprocessing function apply to the context"
+        },
+    )
+    answer_postprocessing: bool = field(
+        default=True,
+        metadata={
+            "help": "Whether to preprocessing text data before reader module"
+                    "If True, text preprocessing function apply to the context"
+        },
     )
