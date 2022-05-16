@@ -1,11 +1,11 @@
 {
     "retriever_path" : "",
     "config_retriever": "./config/retrieval_config.json",
-    "retriever_type" : "TfidfVectorizer",
+    "retriever_type" : "BM25",
     "vectorizer_parameters" : {
-            "ngram_range" : [1, 4]
+            "ngram_range" : [1, 5]
     },
-    "tokenizer_type" : "AutoTokenizer",
+    "tokenizer_type" : "Mecab",
     "model_name_or_path": "klue/roberta-large",
     "top_k": 20,
     "dataset_name": "../data/train_dataset",

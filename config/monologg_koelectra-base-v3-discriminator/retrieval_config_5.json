@@ -1,12 +1,12 @@
 {
     "retriever_path" : "",
     "config_retriever": "./config/retrieval_config.json",
-    "retriever_type" : "TfidfVectorizer",
+    "retriever_type" : "BM25",
     "vectorizer_parameters" : {
-            "ngram_range" : [1, 4]
+            "ngram_range" : [1, 1]
     },
     "tokenizer_type" : "AutoTokenizer",
-    "model_name_or_path": "klue/roberta-large",
+    "model_name_or_path": "monologg/koelectra-base-v3-discriminator",
     "top_k": 20,
     "dataset_name": "../data/train_dataset",
     "data_path": "../data",
