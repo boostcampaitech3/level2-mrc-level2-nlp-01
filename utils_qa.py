@@ -52,6 +52,7 @@ def set_seed(seed: int = 42):
 
 
 def postprocess_qa_predictions(
+    post_process_answer_fn,
     examples,
     features,
     predictions: Tuple[np.ndarray, np.ndarray],
@@ -289,6 +290,10 @@ def postprocess_qa_predictions(
                 output_dir,
                 "null_odds.json" if prefix is None else f"null_odds_{prefix}".json,
             )
+
+        if post_process_answer_fn:
+            for k, answer in all_predictions.items():
+                all_predictions[k] = post_process_answer_fn(answer)
 
         logger.info(f"Saving predictions to {prediction_file}.")
         with open(prediction_file, "w", encoding="utf-8") as writer:
