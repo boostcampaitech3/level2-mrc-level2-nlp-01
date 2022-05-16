@@ -114,28 +114,14 @@ def main():
     # setting retriever
     retriever_dict = {
         'TfidfVectorizer' : 'TfidfSparseRetrieval',
-        'BM25' : 'BM25SparseRetrieval'
+        'BM25' : 'BM25SparseRetrieval',
+        'Elasticsearch' : 'ElasticSearchClient'
     }
 
-    retriever_config_path = os.path.join(model_args.retriever_path,'config.json')
-    retriever_config = utils.read_json(retriever_config_path)
-    retriever_class = getattr(import_module("retriever"), retriever_dict[retriever_config['retriever_type']])
-
-    if hasattr(import_module("transformers"), retriever_config['tokenizer_type']):
-        tokenizer_type = getattr(import_module("transformers"), retriever_config['tokenizer_type'])
-        retriever_tokenizer = tokenizer_type.from_pretrained(retriever_config['model_name_or_path'], use_fast=False, )
-    elif hasattr(import_module("konlpy.tag"), retriever_config['tokenizer_type']):
-        retriever_tokenizer = getattr(import_module("konlpy.tag"), retriever_config['tokenizer_type'])()
-    else:
-        raise Exception(f"Use correct tokenizer type - {retriever_config.tokenizer_type}")
-    print(f'retriever tokenizer : {retriever_config["tokenizer_type"]}')
-    print(retriever_tokenizer)
+    retriever_class = getattr(import_module("retriever"), retriever_dict[model_args.retriever_path])
 
     retriever = retriever_class(
-        retrieval_path=model_args.retriever_path,
-        vectorizer_parameters=retriever_config['vectorizer_parameters'],
-        tokenize_fn=retriever_tokenizer.tokenize if retriever_config["tokenizer_type"] == "AutoTokenizer" else retriever_tokenizer.morphs,
-        output_path=training_args.output_dir
+        index = model_args.index_name
     )
 
     # True일 경우 : run passage retrieval
@@ -319,12 +305,11 @@ def run_mrc(
                 max_answer_length=data_args.max_answer_length,
                 output_dir=training_args.output_dir,
             )
-
         # Metric을 구할 수 있도록 Format을 맞춰줍니다.
-
         formatted_predictions = [
             {"id": k, "prediction_text": post_processing(v)} for k, v in predictions.items()
         ]
+
         if training_args.do_predict:
             return formatted_predictions
         elif training_args.do_eval:
