@@ -50,7 +50,7 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ```
 ### 데이터 소개
 
-아래는 대회에서 사용 데이터셋의 분포를 보여줍니다.
+아래는 대회에서 사용한 데이터셋의 분포를 보여줍니다.
 ![데이터 분포, 외부데이터셋 포함](https://user-images.githubusercontent.com/38339347/168775720-54616295-e5d6-4b5e-9fb8-8e08a47657fe.png)
 
 데이터셋은 편의성을 위해 Huggingface 에서 제공하는 datasets를 이용하여 pyarrow 형식의 데이터로 저장되어있습니다. 다음은 데이터셋의 구성입니다.
