@@ -9,21 +9,7 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="klue/bert-base",
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        },
-    )
-
-    question_model_name_or_path: str = field(
-        default="klue/bert-base",
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        },
-    )
-
-    passage_model_name_or_path: str = field(
-        default="klue/bert-base",
+        default="klue/roberta-large",
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
@@ -35,24 +21,11 @@ class ModelArguments:
             "help": "Pretrained config name or path if not the same as model_name"
         },
     )
+
     tokenizer_name: Optional[str] = field(
         default=None,
         metadata={
             "help": "Pretrained tokenizer name or path if not the same as model_name"
-        },
-    )
-
-    retriever_path: Optional[str] = field(
-        default='./retriever_result/BM25_bert-base-multilingual-cased_20_wikipedia_documents.json_1',
-        metadata={
-            "help": "Pretrained Retriever Path"
-        },
-    )
-
-    index_name: Optional[str] = field(
-        default='wikipedia_documents',
-        metadata={
-            "help": "Pretrained Retriever Path"
         },
     )
 
@@ -116,30 +89,17 @@ class DataTrainingArguments:
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
     )
-
     use_faiss: bool = field(
         default=False, metadata={"help": "Whether to build with faiss"}
     )
 
-    text_preprocessing: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to preprocessing text data before reader module"
-                    "If True, text preprocessing function apply to the context"
-        },
-    )
-    answer_postprocessing: bool = field(
-        default=True,
-        metadata={
-            "help": "Whether to preprocessing text data before reader module"
-                    "If True, text preprocessing function apply to the context"
-        },
-    )
+@dataclass
+class InferenceArguments:
+    """
+    Inference를 위한 Argument들
+    """
 
-    ko_wiki: bool = field(
-        default=False, metadata={"help": "use additional ko_wiki"}
-    ),
-
-    korquad: bool = field(
-        default=False, metadata={"help": "use additional korquad"}
+    checkpoint_path: Optional[str] = field(
+        default="./output/checkpoint-7400/pytorch_model.bin",
+        metadata={"help": "The name of the checkpoint to use."},
     )
