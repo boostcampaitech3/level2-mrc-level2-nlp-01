@@ -9,7 +9,6 @@
 6. [Contributors](#6.-Contributors)
 </br>
 </br>
-</br>
 
 ## 1. Project Overview
 
@@ -51,7 +50,7 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ### 데이터 소개
 
 아래는 대회에서 사용한 데이터셋의 분포를 보여줍니다.
-![데이터 분포, 외부데이터셋 포함](https://user-images.githubusercontent.com/38339347/168775720-54616295-e5d6-4b5e-9fb8-8e08a47657fe.png)
+![데이터 분포, 외부데이터셋 포함](https://user-images.githubusercontent.com/82494506/168776170-fd869928-c709-4f15-bb7b-13bd64d43781.png)
 
 데이터셋은 편의성을 위해 Huggingface 에서 제공하는 datasets를 이용하여 pyarrow 형식의 데이터로 저장되어있습니다. 다음은 데이터셋의 구성입니다.
 
@@ -67,22 +66,22 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 </br>
 
 ## 3. Solutions
-## **Retriever**
-### **Data Preprocessing**
+### **Retriever**
+#### **Data Preprocessing**
 - DPR 모델에 입력으로 들어가기 위하여 Data 중 Context Data에 preprocessing을 하였습니다.
     - Sparse Retrieval의 TF-IDF 및 BM25에서는 문장의 길이에 제한이 없는 반면에, DPR에서 encoder에 사용되는 klue/roberta-large 모델의 경우, 최대 입력받을 수 있는 문장의 길이가 512임. 이에 따라 문장의 길이를 줄여주었습니다..
     - Context 내에 answer가 있는 부분을 기준으로 문장 내의 글자 개수가 최대 600개가 되게 문장이 잘라지도록 하였습니다.
 
-### **DPR retriever**
+#### **DPR retriever**
 - In-Batch Negative: question과 positive sentence로 이루어진 mini-batch 내부에서 다른 example들 사이에서 내적을 통하여 Prediction Score Matrix를 구했습니다..
 - Batch-size는 8로 하여 훈련을 진행하였음. 즉, 질문 1개 당 8개의 문장 중 positive sentence 1개를 찾도록 훈련되었습니다..
 
-## **Reader**
-### **Main Model 선정**
+### **Reader**
+#### **Main Model 선정**
 baseline code에서 'klue/bert-base', 'klue/roberta-large', 'xlm-roberta-large', 'xlnet-large-cased'로 모델만 바꾸어 성능을 측정했습니다.
 이 중 'klue/roberta-large'가 EM 39.5800으로 가장 높은 성능을 보여 해당 모델을 main model로 선정했습니다.
 
-### **Data Augmentation**
+#### **Data Augmentation**
 주어진 4천여개(train set 기준)의 데이터로는 다양한 context, question에 대응하기가 어려울 것이라 판단, 외부 데이터를 사용해 데이터를 증강했습니다. (본 대회는 외부 데이터 허용)
 - [ko_wiki_v1_squad](https://aihub.or.kr/aidata/84)
     - AI HUB의 '일반상식' 데이터셋 중 'wiki 본문에 대한 질문-답 쌍'
@@ -91,11 +90,11 @@ baseline code에서 'klue/bert-base', 'klue/roberta-large', 'xlm-roberta-large',
     - The Korean Quesiton Answering Dataset
     - train set 기준 약 6만 개
 
-### **Hyper-parameters tuning**
+#### **Hyper-parameters tuning**
 lr rate, warmup ratio, epochs, batch size 등 hyper parameter를 바꾸어가며 실험했습니다.
 이 중 **batch size 변경**이 가장 효과적이었으며 'klue/roberta-large', **batch size 128**일 때 가장 높은 성능을 보였습니다.
 
-### **Ensemble**
+#### **Ensemble**
 Retriever, Reader 각각의 고도화를 마친 후 통합하여 inference를 진행하였을 때 최고 성능은 **EM 63.3300**이었습니다.
 하지만 validation set으로 확인해봤을 때 특정 question에서 자주 예측을 실패하는 것을 확인했습니다.
 단일 모델 고도화로는 한계가 있다고 생각하여 다양한 모델을 통한 Ensemble을 진행했습니다.
@@ -112,15 +111,15 @@ Retriever, Reader 각각의 고도화를 마친 후 통합하여 inference를 �
     - 'klue/roberta-large'와 타 모델 간의 성능 격차가 컸기 때문에 정답을 맞출 확률이 높은 'klue/roberta-large'에 가중치를 주기로 했습니다.
 
 ## 4. Results
-## Retriever
-## Reader
-### **Data Augmentation**
+### Retriever
+### Reader
+#### **Data Augmentation**
 EM 39.5800 → 45.8300
 
-### **Hyper-parameters tuning**
+#### **Hyper-parameters tuning**
 EM 48.7500 → 58.3300
 
-### **Ensemble(soft-voting)**
+#### **Ensemble(soft-voting)**
 1. 'klue/roberta-large' 4개
 </br>
 (public test set) EM 62.9200, F1 75.7400 → (private test set) **EM 64.4400**, F1 77.0300
@@ -129,11 +128,11 @@ EM 48.7500 → 58.3300
 </br>
 (public test set) EM 62.0800, F1 75.0600 → (private test set) **EM 64.4400**, F1 76.9100
 
-## 최종 결과
-### Public Dataset -> 7등
+### 최종 결과
+#### Public Dataset -> 7등
 ![image](https://user-images.githubusercontent.com/82494506/168751336-df7317db-4b3e-4357-9d98-9d331556c407.png)
 
-### Private Dataset -> 3등
+#### Private Dataset -> 3등
 ![image](https://user-images.githubusercontent.com/82494506/168751216-7a965199-768c-456a-9327-59f80a46647f.png)
 
 ## 5. Usages
@@ -151,10 +150,10 @@ bash ./install/install_requirements.sh
 
 </br>
 
-## Retriever
+### Retriever
 
-## Reader
-### train
+### Reader
+#### train
 
 만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
 
@@ -197,7 +196,7 @@ python train_data_aug.py --output_dir ./models/train_dataset --do_train --korqua
 python train_data_aug.py --output_dir ./models/train_dataset --do_train --ko_wiki --korquad
 ```
 
-### eval
+#### eval
 
 MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 예시에 단순히 `--do_eval` 을 추가로 입력해서 훈련 및 평가를 동시에 진행할 수도 있습니다.
 
@@ -206,7 +205,7 @@ MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 
 python train_data_aug.py --output_dir ./outputs/train_dataset --model_name_or_path ./models/train_dataset/ --do_eval 
 ```
 
-### inference
+#### inference
 
 retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
 
@@ -226,11 +225,11 @@ python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/
 python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/train_dataset/ --model_name_or_path ./models/train_dataset/ --do_eval
 ```
 
-### How to submit
+#### How to submit
 
 `inference.py` 파일을 위 예시처럼 `--do_predict` 으로 실행하면 `--output_dir` 위치에 `predictions.json` 이라는 파일이 생성됩니다. 해당 파일을 제출해주시면 됩니다.
 
-### Ensemble(soft-voting)
+#### Ensemble(soft-voting)
 `soft_voting.py`와 arguments를 이용하여 ensemble을 진행할 수 있습니다. 각 모델 inference 시 생성되는 `nbest_predictions.json`(not `predictions.json`)을 모아놓은 디렉토리를 `--cand_dir` argument로 입력하면 됩니다.
 ```python
 # 앙상블 예시
@@ -238,7 +237,7 @@ python soft_voting.py --cand_dir ./ensemble
 # '--description'로 원하는 경우 앙상블에 대한 간략한 설명 추가 가능
 ```
 
-## Things to know
+### Things to know
 
 1. `train_data_aug.py` 에서 sparse embedding 을 훈련하고 저장하는 과정은 시간이 오래 걸리지 않아 따로 argument 의 default 가 True로 설정되어 있습니다. 실행 후 sparse_embedding.bin 과 tfidfv.bin 이 저장이 됩니다. **만약 sparse retrieval 관련 코드를 수정한다면, 꼭 두 파일을 지우고 다시 실행해주세요!** 안그러면 기존 파일이 load 됩니다.
 
