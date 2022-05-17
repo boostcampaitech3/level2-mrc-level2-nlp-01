@@ -6,9 +6,6 @@
 3. [Reuslt](#3.-Result,-Usage)
 4. [Usage](#4.-Usage)
 5. [Contributors](#5.-Contributors)
-</br>
-</br>
-</br>
 
 ## 1. Project Overview
 
@@ -21,11 +18,8 @@
 - Open-Domain Question Answering(ODQA)
     - Retriever 와 MRC Task를 결합한 시스템
 - P stage 3 대회를 위한 베이스라인 
-</br> 
 
 ### 파일 구성
-
-
 #### 저장소 구조
 
 ```bash
@@ -40,8 +34,6 @@ utils_qa.py              # 기타 유틸 함수 제공
 train.py                 # MRC, Retrieval 모델 학습 및 평가 
 inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
 ```
-</br>
-
 ### 데이터 소개
 
 아래는 제공하는 데이터셋의 분포를 보여줍니다.
@@ -59,22 +51,12 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 
 data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 확인 가능합니다. 
 
-</br>
-
 ### 평가 방법
 #### EM(Exact Match)
 ![image](https://user-images.githubusercontent.com/82494506/168542423-c81a5595-ab68-4b6d-b811-1ab53857ada5.png)
 #### F1 score
 ![image](https://user-images.githubusercontent.com/82494506/168542194-ae09fc31-e487-4efa-8e51-6eab2374b2b4.png)
-</br>
-</br>
-</br>
-
 ## 2. Solution
-
-</br>
-</br>
-</br>
 
 ## 3. Result
 ### Public Dataset -> 7등
@@ -82,9 +64,6 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 
 ### Private Dataset -> 3등
 ![image](https://user-images.githubusercontent.com/82494506/168751216-7a965199-768c-456a-9327-59f80a46647f.png)
-</br>
-</br>
-</br>
 
 ## 4. Usage
 ### 설치 방법
@@ -98,8 +77,6 @@ tar -xzf data.tar.gz
 # 필요한 파이썬 패키지 설치. 
 bash ./install/install_requirements.sh
 ```
-</br>
-
 ### train
 
 만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
@@ -131,7 +108,6 @@ def prepare_train_features(examples):
 # 학습 예시 (train_dataset 사용)
 python train.py --output_dir ./models/train_dataset --do_train
 ```
-</br>
 
 ### eval
 
@@ -141,7 +117,6 @@ MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 
 # mrc 모델 평가 (train_dataset 사용)
 python train.py --output_dir ./outputs/train_dataset --model_name_or_path ./models/train_dataset/ --do_eval 
 ```
-</br>
 
 ### inference
 
@@ -156,13 +131,10 @@ retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 
 # wandb 가 로그인 되어있다면 자동으로 결과가 wandb 에 저장됩니다. 아니면 단순히 출력됩니다
 python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/test_dataset/ --model_name_or_path ./models/train_dataset/ --do_predict
 ```
-</br>
 
 ### How to submit
 
 `inference.py` 파일을 위 예시처럼 `--do_predict` 으로 실행하면 `--output_dir` 위치에 `predictions.json` 이라는 파일이 생성됩니다. 해당 파일을 제출해주시면 됩니다.
-</br>
-</br>
 
 ### Things to know
 1. `train.py` 에서 sparse embedding 을 훈련하고 저장하는 과정은 시간이 오래 걸리지 않아 따로 argument 의 default 가 True로 설정되어 있습니다. 실행 후 sparse_embedding.bin 과 tfidfv.bin 이 저장이 됩니다. **만약 sparse retrieval 관련 코드를 수정한다면, 꼭 두 파일을 지우고 다시 실행해주세요!** 안그러면 기존 파일이 load 됩니다.
@@ -170,9 +142,6 @@ python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/
 2. 모델의 경우 `--overwrite_cache` 를 추가하지 않으면 같은 폴더에 저장되지 않습니다. 
 
 3. `./outputs/` 폴더 또한 `--overwrite_output_dir` 을 추가하지 않으면 같은 폴더에 저장되지 않습니다.
-</br>
-</br>
-</br>
 
 ## 5. Contributors
 - 강범서_T3002 : https://github.com/Kang-Beom-Seo
