@@ -47,8 +47,7 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ![데이터셋](https://user-images.githubusercontent.com/38339347/168778410-a1a23406-16ef-4d7d-b49e-e94f09267448.png)
 
 
-MRC 대회에서 기본적으로 제공한 데이터셋은 편의성을 위해 Huggingface 에서 제공하는 datasets를 이용하여 pyarrow 형식의 데이터로 저장되어있습니다. 다음은 대회 기본 제공 데이터셋의 구성입니다.
-
+MRC 대회에서 기본적으로 제공한 데이터셋은 편의성을 위해 Huggingface 에서 제공하는 datasets를 이용하여 pyarrow 형식의 데이터로 저장되어 있습니다. 다음은 `./data` 구조입니다.
 ```bash
 ./data/                        # 전체 데이터
     ./train_dataset/           # 학습에 사용할 데이터셋. train 과 validation 으로 구성 
