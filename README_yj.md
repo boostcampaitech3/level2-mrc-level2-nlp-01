@@ -7,11 +7,7 @@
 4. [Reuslts](#4.-Result,-Usage)
 5. [Usages](#5.-Usage)
 6. [Contributors](#6.-Contributors)
-</br>
-</br>
-
 ## 1. Project Overview
-
 ### 소개
 - Retriever Task와 Reader Task를 구성하고 통합하여, 질문을 던졌을 때 답변을 해주는 ODQA 시스템 개발
 - Retriever
@@ -27,9 +23,6 @@
 ![image](https://user-images.githubusercontent.com/82494506/168542423-c81a5595-ab68-4b6d-b811-1ab53857ada5.png)
 #### F1 score
 ![image](https://user-images.githubusercontent.com/82494506/168542194-ae09fc31-e487-4efa-8e51-6eab2374b2b4.png)
-</br>
-</br>
-</br>
 
 ## 2. Architecture
 ### 파일 구성
@@ -62,8 +55,6 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ```
 
 data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 확인 가능합니다. 
-
-</br>
 
 ## 3. Solutions
 ### **Retriever**
@@ -147,9 +138,6 @@ tar -xzf data.tar.gz
 # 필요한 파이썬 패키지 설치. 
 bash ./install/install_requirements.sh
 ```
-
-</br>
-
 ### Retriever
 
 ### Reader
