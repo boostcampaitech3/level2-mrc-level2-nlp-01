@@ -35,10 +35,10 @@ lr rate, warmup ratio, epochs, batch size 등 hyper parameter를 바꾸어가며
 
 #### \<Ensemble\>
 Retriever, Reader 각각의 고도화를 마친 후 통합하여 inference를 진행하였을 때 최고 성능은 **EM 63.3300**이었다.
-하지만 validation set에서 오답인 경우를 보았을 때 특정 question에서 자주 예측을 실패하는 경향을 확인했다.
+하지만 validation set으로 확인해봤을 때 특정 question에서 자주 예측을 실패하는 것을 확인했다.
 단일 모델 고도화로는 한계가 있다고 생각하여 다양한 모델을 통한 Ensemble을 진행했다.
 
-`soft_voting.py` 파일을 통해 soft-voting을 진행할 수 있다. 각 모델이 얼만큼의 확신을 가지고 있는지, 특정 텍스트가 얼마나 많은 모델에서 예측된 텍스트인지를 반영하도록 했다.
+`soft_voting.py` 파일을 통해 soft-voting을 진행할 수 있다. nbest_prediction.json의 예측 텍스트와 그 확률을 활용하여 각 모델이 얼만큼의 확신을 가지고 있는지, 특정 텍스트가 얼마나 많은 모델에서 예측된 텍스트인지를 반영하도록 했다.
 
 최종적으로 'klue/roberta-large' 모델 4개, 'ko-electra-base' 1개, 'xlm-roberta-large' 1개를 앙상블하여 제출했다.
 
