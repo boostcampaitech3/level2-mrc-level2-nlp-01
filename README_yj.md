@@ -3,8 +3,9 @@
 ## Index
 1. [Project Overview](#1.-Project-Overview)
 2. [Solution](#2.-Soulution)
-3. [Reuslt, Usage](#3.-Result,-Usage)
-4. [Contributors](#4.-Contributors)
+3. [Reuslt](#3.-Result,-Usage)
+4. [Usage](#4.-Usage)
+5. [Contributors](#5.-Contributors)
 </br>
 </br>
 </br>
@@ -75,7 +76,7 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 </br>
 </br>
 
-## 3. Result, Usage
+## 3. Result
 ### 결과
 #### Public Dataset -> 7등
 ![image](https://user-images.githubusercontent.com/82494506/168751336-df7317db-4b3e-4357-9d98-9d331556c407.png)
@@ -84,7 +85,9 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 ![image](https://user-images.githubusercontent.com/82494506/168751216-7a965199-768c-456a-9327-59f80a46647f.png)
 </br>
 </br>
+</br>
 
+## 4. Usage
 ### 설치 방법
 
 #### 요구 사항
@@ -172,7 +175,7 @@ python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/
 </br>
 </br>
 
-## 4. Contributors
+## 5. Contributors
 - 강범서_T3002 : https://github.com/Kang-Beom-Seo
 - 오필훈_T3127 : https://github.com/philhoonoh
 - 이예진_T3158 : https://github.com/leeyejin1231
