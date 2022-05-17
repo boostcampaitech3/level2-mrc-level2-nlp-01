@@ -127,11 +127,9 @@ EM 39.5800 → 45.8300
 EM 48.7500 → 58.3300
 
 ### **Ensemble(soft-voting)**
-1. 'klue/roberta-large' 4개
-(public test set) EM 62.9200, F1 75.7400 → (private test set) **EM 64.4400**, F1 77.0300
+1. 'klue/roberta-large' 4개</br>(public test set) EM 62.9200, F1 75.7400 → (private test set) **EM 64.4400**, F1 77.0300
 </br>
-2. 'klue/roberta-large' 4개 + 'ko-electra' 1개 + 'xlm-roberta-large' 1개
-(public test set) EM 62.0800, F1 75.0600 → (private test set) **EM 64.4400**, F1 76.9100
+2. 'klue/roberta-large' 4개 + 'ko-electra' 1개 + 'xlm-roberta-large' 1개</br>(public test set) EM 62.0800, F1 75.0600 → (private test set) **EM 64.4400**, F1 76.9100
 
 ## 최종 결과
 ### Public Dataset -> 7등
