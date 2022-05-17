@@ -21,7 +21,6 @@
     - Retriever 와 MRC Task를 결합한 시스템
 - P stage 3 대회를 위한 베이스라인 
 </br> 
-</br>
 
 ### 파일 구성
 
