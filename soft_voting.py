@@ -55,12 +55,6 @@ if __name__ == '__main__':
         help="dir which the candidates is in"
     )
     parser.add_argument(
-        "--output_dir",
-        default="ensemble/soft_voting",
-        type=str,
-        help="output dir which soft voted predictions are saved in"
-    )
-    parser.add_argument(
         "--description",
         default="",
         type=str,
