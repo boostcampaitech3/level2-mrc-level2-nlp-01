@@ -12,6 +12,7 @@
 ## 2. Solutions
 ### Retriever
 
+=====
 ### Reader
 #### \<Main Model 선정\>
 한국어 말뭉치로 학습 된 모델 중 어느정도 성능이 보장되었다고 알려진 koelectra 모델을 선정하였다. 
@@ -20,6 +21,8 @@
 huggingface에 업로드되어있는 모델 중 monologg/koelectra-v3-base 대상 learning rate, warmup ratio, epochs, batch size 등 hyper parameter를 바꾸어가며 실험했다.
 이 중 batch size와 learning rate 변경이 가장 효과적이었으며, learning rate 3e-5, batch size 128일 때 가장 높은 성능을 보였다.
 **EM 32.5000 → 41.2500**
+
+=====
 
 #### \<Data Augmentation\>
 주어진 4천여개(train set 기준)의 데이터로는 다양한 context, question에 대응하기가 어려울 것이라 판단하여 외부 데이터를 사용해 데이터를 증강시켰다. (본 대회는 외부 데이터 허용)
