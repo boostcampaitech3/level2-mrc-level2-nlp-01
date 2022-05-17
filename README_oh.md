@@ -22,17 +22,31 @@ bash ./install/install_requirements.sh
 ### 저장소 구조
 
 ```bash
+.
+├── README.md
+├── README_oh.md
+├── arguments.py
+├── assets
+├── config # retriever config directory
+├── dpr # Dense Passage Retriever module 
+├── inference.py # baseline - inference 
+├── inference_elasticsearch.py # elasticsearch inference
+├── inference_sparse.py # sparseretriever inference
+├── install # 요구사항 설치 파일 
+├── jupyternote_books # experimental jupyter notebook directory 
+├── requirements.txt
+├── retrieval.py # baseline - sparse retriever 
+├── retrieval_elasticsearch.py # elasticsearch retriever 
+├── retrieval_elasticsearch_setup.py # elasticsearch set-up
+├── retrieval_sparse.py # sparse retriever 
+├── retriever # retriever module
+├── retriever_result # retriever result directory 
+├── train.py # baseline MRC traininig script  
+├── train_data_aug.py # 
+├── trainer_qa.py # MRC 모델 학습에 필요한 trainer 제공
+├── utils # 유틸함수 모듈 
+└── utils_qa.py # train_qa 기타 유틸 함수 제공 
 
-./assets/                # readme 에 필요한 이미지 저장
-./install/               # 요구사항 설치 파일 
-./data/                  # 전체 데이터. 아래 상세 설명
-retrieval.py             # sparse retreiver 모듈 제공 
-arguments.py             # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
-trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
-utils_qa.py              # 기타 유틸 함수 제공 
-
-train.py                 # MRC, Retrieval 모델 학습 및 평가 
-inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
 ```
 
 ## 데이터 소개
@@ -120,3 +134,82 @@ python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/
 2. 모델의 경우 `--overwrite_cache` 를 추가하지 않으면 같은 폴더에 저장되지 않습니다. 
 
 3. `./outputs/` 폴더 또한 `--overwrite_output_dir` 을 추가하지 않으면 같은 폴더에 저장되지 않습니다.
+
+## 4. usuage
+### 4-1. Sparse Retriever
+```python
+# Sparse Retriever 생성 및 평가  
+# retriever configuration : ./config/retrieval_config.json 에 따라 
+# 저장 경로 : './retriver_results/{MODELNAME}' 
+python retrieval_sparse.py --config_retriever ./config/retrieval_config.json
+```
+
+### 4-2. Elasticsearch Retriever
+```python
+# elasticsearch set-up
+python retrieval_elasticsearch_setup.py --config_elasticsearch ./config/elasticsearch_config.json
+
+# elasticsearch 평가 
+python retrieval_elasticsearch.py --index_name wikipedia_documents \ # elasticsearch_config.json 의 index_name
+        --context_path wikipedia_documents.json \
+        --output_path ./retriever_result \
+        --dataset_name ./data/train_dataset \
+        --top_k 20
+```
+
+### 4-3. Evaluation (Sparse Retriever/Elasticsearch Retriever + MRC)
+```python
+# Sparse Retriever + MRC - train data 평가
+python inference_sparse.py --output_dir ./result \
+        --dataset_name ../data/train_dataset \
+        --model_name_or_path {MRC_MODEL_PATH} \
+        --retriever_path {RETRIEVER_MODEL_PATH} \
+        --do_eval \
+        --top_k_retrieval 20 \
+        --overwrite_output_dir
+        --answer_postprocessing False \
+        --per_device_eval_batch_size 32 \
+        --max_seq_length 512
+
+# Elasticsearch + MRC 평가 - train data 평가
+python inference_elasticsearch.py --output_dir ./result \
+        --dataset_name ../data/train_dataset \
+        --model_name_or_path {MRC_MODEL_PATH} \
+        --retriever_path Elasticsearch \
+        --index_name wikipedia_documents \
+        --do_eval \
+        --top_k_retrieval 30 \
+        --overwrite_output_dir \
+        --answer_postprocessing False \
+        --per_device_eval_batch_size 32 \
+        --max_seq_length 512
+```
+
+### 4-4. Inference (Sparse Retriever/Elasticsearch Retriever + MRC)
+```python
+# Sparse Retriever + MRC 평가 - test data inference
+python inference_sparse.py --output_dir ./result \
+       --dataset_name ../data/test_dataset \
+       --model_name_or_path {MRC_MODEL_PATH} \
+       --retriever_path {RETRIEVER_MODEL_PATH} \
+       --do_predict \
+       --top_k_retrieval 30 \
+       --overwrite_output_dir \
+       --answer_postprocessing False \
+       --per_device_eval_batch_size 32 \
+       --max_seq_length 512
+
+# Elasticsearch + MRC 평가 - test data inference
+python inference_elasticsearch.py --output_dir ./result \
+        --dataset_name ../data/test_dataset \
+        --model_name_or_path {MRC_MODEL_PATH} \
+        --retriever_path Elasticsearch \
+        --index_name wikipedia_documents \
+        --do_predict \
+        --top_k_retrieval 30 \
+        --overwrite_output_dir \
+        --answer_postprocessing False \
+        --per_device_eval_batch_size 32 \
+        --max_seq_length 512
+```
+
