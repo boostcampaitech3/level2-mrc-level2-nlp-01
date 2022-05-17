@@ -1,23 +1,46 @@
 # BOOSTCAMP AI TECH 3 - \[NLP\] ODQA
 
-## 목차
+## Index
 1. Overview
 2. Solutions
 3. Results
 4. Usage
 5. Contributors
----
-## 1. Overview
----
-## 2. Solutions
-### Retriever
 
-### Reader
-#### \<Main Model 선정\>
+## 1. Overview
+### 대회 개요
+- Retriever Task와 Reader Task를 구성하고 통합하여, 질문을 던졌을 때 답변을 해주는 ODQA 시스템 개발
+- Retriever
+    - 방대한 Open Domain Dataset에서 질의에 알맞은 지문을 찾아오는 Task
+- Machine Reading Comprehension(MRC)
+    - 지문이 주어진 상황에서 질의에 대해 응답하는 기계 독해 Task
+- Open-Domain Question Answering(ODQA)
+    - Retriever 와 MRC Task를 결합한 시스템
+- P stage 3 대회를 위한 베이스라인 
+
+### 평가 방법
+#### EM(Exact Match)
+![image](https://user-images.githubusercontent.com/82494506/168542423-c81a5595-ab68-4b6d-b811-1ab53857ada5.png)
+#### F1 score
+![image](https://user-images.githubusercontent.com/82494506/168542194-ae09fc31-e487-4efa-8e51-6eab2374b2b4.png)
+
+## 2. Solutions
+## **Retriever**
+### Data Preprocessing
+- DPR 모델에 입력으로 들어가기 위하여 Data 중 Context Data에 preprocessing을 하였음.
+    - Sparse Retrieval의 TF-IDF 및 BM25에서는 문장의 길이에 제한이 없는 반면에, DPR에서 encoder에 사용되는 klue/roberta-large 모델의 경우, 최대 입력받을 수 있는 문장의 길이가 512임. 이에 따라 문장의 길이를 줄여주었음.
+    - Context 내에 answer가 있는 부분을 기준으로 문장 내의 글자 개수가 최대 600개가 되게 문장이 잘라지도록 하였음.
+
+### DPR retriever
+- In-Batch Negative: question과 positive sentence로 이루어진 mini-batch 내부에서 다른 example들 사이에서 내적을 통하여 Prediction Score Matrix를 구하였음.
+- Batch-size는 8로 하여 훈련을 진행하였음. 즉, 질문 1개 당 8개의 문장 중 positive sentence 1개를 찾도록 훈련되었음.
+
+## **Reader**
+### Main Model 선정
 baseline code에서 'klue/bert-base', 'klue/roberta-large', 'xlm-roberta-large', 'xlnet-large-cased'로 모델만 바꾸어 성능을 측정하였다.
 이 중 'klue/roberta-large'가 EM 39.5800으로 가장 높은 성능을 보여 해당 모델을 main model로 선정했다.
 
-#### \<Data Augmentation\>
+### Data Augmentation
 주어진 4천여개(train set 기준)의 데이터로는 다양한 context, question에 대응하기가 어려울 것이라 판단하여 외부 데이터를 사용해 데이터를 증강시켰다. (본 대회는 외부 데이터 허용)
 - [ko_wiki_v1_squad](https://aihub.or.kr/aidata/84)
     - AI HUB의 '일반상식' 데이터셋 중 'wiki 본문에 대한 질문-답 쌍'
@@ -26,14 +49,13 @@ baseline code에서 'klue/bert-base', 'klue/roberta-large', 'xlm-roberta-large',
     - The Korean Quesiton Answering Dataset
     - train set 기준 약 6만 개
 
-**EM 39.5800 → 45.8300**
 
-#### \<Hyper-parameters tuning\>
+
+### Hyper-parameters tuning
 lr rate, warmup ratio, epochs, batch size 등 hyper parameter를 바꾸어가며 실험했다.
 이 중 batch size 변경이 가장 효과적이었으며 'klue/roberta-large', batch size 128일 때 가장 높은 성능을 보였다.
-**EM 48.7500 → 58.3300**
 
-#### \<Ensemble\>
+### Ensemble
 Retriever, Reader 각각의 고도화를 마친 후 통합하여 inference를 진행하였을 때 최고 성능은 **EM 63.3300**이었다.
 하지만 validation set으로 확인해봤을 때 특정 question에서 자주 예측을 실패하는 것을 확인했다.
 단일 모델 고도화로는 한계가 있다고 생각하여 다양한 모델을 통한 Ensemble을 진행했다.
@@ -42,11 +64,23 @@ Retriever, Reader 각각의 고도화를 마친 후 통합하여 inference를 �
 
 최종적으로 'klue/roberta-large' 모델 4개, 'ko-electra-base' 1개, 'xlm-roberta-large' 1개를 앙상블하여 제출했다.
 
-**(public test set) EM 62.0800 → (private test set) EM 64.4400**
-
----
 ## 3. Results
----
+
+## Retriver
+- Training 시에는 97% 정도의 정확도를 달성하였음.(Batch-size=8)
+- 그러나, 전체 훈련 데이터(약 3700개 기준) 기준 평가 시 Top-20에서 79% 정도의 정확도를 달성하였음.
+
+## Reader
+### Data Augmentation
+EM 39.5800 → 45.8300
+
+### Hyper-parameters tuning
+EM 48.7500 → 58.3300
+
+### Ensemble(soft-voting)
+(public test set) EM 62.0800 → (private test set) EM 64.4400
+
+
 ## 4. Usage
 ## 설치 방법
 ### 요구 사항
@@ -73,7 +107,9 @@ trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
 utils_qa.py              # 기타 유틸 함수 제공 
 
 train.py                 # MRC, Retrieval 모델 학습 및 평가 
+train_data_aug.py        # 'ko_wiki', 'korquad' 등 augmented dataset 활용한 모델 학습
 inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
+soft_voting.py           # 각 모델의 nbest_predictions.json를 활용하여 soft-voting
 ```
 
 ## 데이터 소개
@@ -93,7 +129,7 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 
 data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 확인 가능합니다. 
 
-# 훈련, 평가, 추론
+## 훈련, 평가, 추론
 
 ### train
 
