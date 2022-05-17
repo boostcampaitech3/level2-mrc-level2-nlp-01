@@ -1,6 +1,6 @@
-# Readme
+![image](https://user-images.githubusercontent.com/82494506/168751972-956f972a-c4d9-45c5-84e1-edd5bd9d1279.png)
 
-# Index
+## Index
 1. Project Overview
 2. Solution
 3. Reuslt, Usage
@@ -9,9 +9,9 @@
 </br>
 </br>
 
-# 1. Project Overview
+## 1. Project Overview
 
-## 소개
+### 소개
 - Retriever Task와 Reader Task를 구성하고 통합하여, 질문을 던졌을 때 답변을 해주는 ODQA 시스템 개발
 - Retriever
     - 방대한 Open Domain Dataset에서 질의에 알맞은 지문을 찾아오는 Task
@@ -23,10 +23,10 @@
 </br> 
 </br>
 
-## 파일 구성
+### 파일 구성
 
 
-### 저장소 구조
+#### 저장소 구조
 
 ```bash
 ./assets/                # readme 에 필요한 이미지 저장
@@ -42,7 +42,7 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ```
 </br>
 
-## 데이터 소개
+### 데이터 소개
 
 아래는 제공하는 데이터셋의 분포를 보여줍니다.
 
@@ -61,34 +61,34 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 
 </br>
 
-## 평가 방법
-### EM(Exact Match)
+### 평가 방법
+#### EM(Exact Match)
 ![image](https://user-images.githubusercontent.com/82494506/168542423-c81a5595-ab68-4b6d-b811-1ab53857ada5.png)
-### F1 score
+#### F1 score
 ![image](https://user-images.githubusercontent.com/82494506/168542194-ae09fc31-e487-4efa-8e51-6eab2374b2b4.png)
 </br>
 </br>
 </br>
 
-# 2. Solution
+## 2. Solution
 
 </br>
 </br>
 </br>
 
-# 3. Result, Usage
-## 결과
-### Public Dataset -> 7등
+## 3. Result, Usage
+### 결과
+#### Public Dataset -> 7등
 ![image](https://user-images.githubusercontent.com/82494506/168751336-df7317db-4b3e-4357-9d98-9d331556c407.png)
 
-### Private Dataset -> 3등
+#### Private Dataset -> 3등
 ![image](https://user-images.githubusercontent.com/82494506/168751216-7a965199-768c-456a-9327-59f80a46647f.png)
 </br>
 </br>
 
-## 설치 방법
+### 설치 방법
 
-### 요구 사항
+#### 요구 사항
 
 ```
 # data (51.2 MB)
@@ -99,7 +99,7 @@ bash ./install/install_requirements.sh
 ```
 </br>
 
-## train
+### train
 
 만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
 
@@ -132,7 +132,7 @@ python train.py --output_dir ./models/train_dataset --do_train
 ```
 </br>
 
-## eval
+### eval
 
 MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 예시에 단순히 `--do_eval` 을 추가로 입력해서 훈련 및 평가를 동시에 진행할 수도 있습니다.
 
@@ -142,7 +142,7 @@ python train.py --output_dir ./outputs/train_dataset --model_name_or_path ./mode
 ```
 </br>
 
-## inference
+### inference
 
 retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
 
@@ -157,13 +157,13 @@ python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/
 ```
 </br>
 
-## How to submit
+### How to submit
 
 `inference.py` 파일을 위 예시처럼 `--do_predict` 으로 실행하면 `--output_dir` 위치에 `predictions.json` 이라는 파일이 생성됩니다. 해당 파일을 제출해주시면 됩니다.
 </br>
 </br>
 
-## Things to know
+### Things to know
 1. `train.py` 에서 sparse embedding 을 훈련하고 저장하는 과정은 시간이 오래 걸리지 않아 따로 argument 의 default 가 True로 설정되어 있습니다. 실행 후 sparse_embedding.bin 과 tfidfv.bin 이 저장이 됩니다. **만약 sparse retrieval 관련 코드를 수정한다면, 꼭 두 파일을 지우고 다시 실행해주세요!** 안그러면 기존 파일이 load 됩니다.
 
 2. 모델의 경우 `--overwrite_cache` 를 추가하지 않으면 같은 폴더에 저장되지 않습니다. 
@@ -173,7 +173,7 @@ python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/
 </br>
 </br>
 
-# 4. Contributors
+## 4. Contributors
 - 강범서_T3002 : https://github.com/Kang-Beom-Seo
 - 오필훈_T3127 : https://github.com/philhoonoh
 - 이예진_T3158 : https://github.com/leeyejin1231
