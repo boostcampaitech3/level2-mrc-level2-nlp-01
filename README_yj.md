@@ -77,11 +77,10 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 </br>
 
 ## 3. Result
-### 결과
-#### Public Dataset -> 7등
+### Public Dataset -> 7등
 ![image](https://user-images.githubusercontent.com/82494506/168751336-df7317db-4b3e-4357-9d98-9d331556c407.png)
 
-#### Private Dataset -> 3등
+### Private Dataset -> 3등
 ![image](https://user-images.githubusercontent.com/82494506/168751216-7a965199-768c-456a-9327-59f80a46647f.png)
 </br>
 </br>
