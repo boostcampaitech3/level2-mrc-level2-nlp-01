@@ -2,11 +2,11 @@
 
 ## Index
 1. [Project Overview](#1.-Project-Overview)
-2. Architecture
-3. [Solutions](#2.-Soulution)
-4. [Reuslts](#3.-Result,-Usage)
-5. [Usages](#4.-Usage)
-6. [Contributors](#5.-Contributors)
+2. [Architecture](#2.-Architecture)
+3. [Solutions](#3.-Soulution)
+4. [Reuslts](#4.-Result,-Usage)
+5. [Usages](#5.-Usage)
+6. [Contributors](#6.-Contributors)
 </br>
 </br>
 </br>
