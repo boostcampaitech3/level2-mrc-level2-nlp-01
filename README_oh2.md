@@ -23,7 +23,8 @@
 - P stage 3 대회를 위한 베이스라인 
 </br> 
 
-### 파일 구
+### 파일 구성
+
 
 #### 저장소 구조
 
@@ -99,26 +100,7 @@ bash ./install/install_requirements.sh
 ```
 </br>
 
-### Retriever 
-### 4-1. Train/Evaluate Sparse Retriever
-```python
-# Sparse Retriever 생성 및 평가  
-# retriever configuration : ./config/retrieval_config.json 에 따라 
-# 저장 경로 : './retriver_results/{MODELNAME}' 
-python retrieval_sparse.py --config_retriever ./config/retrieval_config.json
-```
-### 4-2. Train/Evaluate Elasticsearch Retriever
-```python
-# elasticsearch set-up
-python retrieval_elasticsearch_setup.py --config_elasticsearch ./config/elasticsearch_config.json
-
-# elasticsearch 평가 
-python retrieval_elasticsearch.py --index_name wikipedia_documents \ # elasticsearch_config.json 의 index_name
-        --context_path wikipedia_documents.json \
-        --output_path ./retriever_result \
-        --dataset_name ./data/train_dataset \
-        --top_k 20
-```
+### train
 
 만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
 
