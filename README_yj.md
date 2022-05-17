@@ -22,7 +22,6 @@
 - Open-Domain Question Answering(ODQA)
     - Retriever 와 MRC Task를 결합한 시스템
 - P stage 3 대회를 위한 베이스라인 
-</br> 
 
 ### 평가 방법
 #### EM(Exact Match)
@@ -35,8 +34,6 @@
 
 ## 2. Architecture
 ### 파일 구성
-
-
 #### 저장소 구조
 
 ```bash
@@ -51,8 +48,6 @@ utils_qa.py              # 기타 유틸 함수 제공
 train.py                 # MRC, Retrieval 모델 학습 및 평가 
 inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
 ```
-</br>
-
 ### 데이터 소개
 
 아래는 제공하는 데이터셋의 분포를 보여줍니다.
@@ -137,9 +132,6 @@ EM 48.7500 → 58.3300
 
 ### Private Dataset -> 3등
 ![image](https://user-images.githubusercontent.com/82494506/168751216-7a965199-768c-456a-9327-59f80a46647f.png)
-</br>
-</br>
-</br>
 
 ## 5. Usages
 ### 설치 방법
@@ -153,6 +145,7 @@ tar -xzf data.tar.gz
 # 필요한 파이썬 패키지 설치. 
 bash ./install/install_requirements.sh
 ```
+
 </br>
 
 ## Retriever
@@ -223,6 +216,7 @@ retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 
 # wandb 가 로그인 되어있다면 자동으로 결과가 wandb 에 저장됩니다. 아니면 단순히 출력됩니다
 python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/test_dataset/ --model_name_or_path ./models/train_dataset/ --do_predict
 ```
+
 
 ```bash
 # train_dataset의 'validation' set으로 평가
