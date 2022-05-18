@@ -1,12 +1,12 @@
 ![image](https://user-images.githubusercontent.com/82494506/168751972-956f972a-c4d9-45c5-84e1-edd5bd9d1279.png)
 
 ## Index
-1. [Project Overview](#1.-Project-Overview)
-2. [Architecture](#2.-Architecture)
-3. [Solutions](#3.-Soulution)
-4. [Reuslts](#4.-Result,-Usage)
-5. [Usages](#5.-Usage)
-6. [Contributors](#6.-Contributors)
+1. [Project Overview](#1-project-overview)
+2. [Architecture](#2-architecture)
+3. [Solutions](#3-solutions)
+4. [Reuslts](#4-results)
+5. [Usages](#5-usages)
+6. [Contributors](#6-contributors)
 </br>
 </br>
 </br>
