@@ -7,9 +7,7 @@
 4. [Reuslts](#4-results)
 5. [Usages](#5-usages)
 6. [Contributors](#6-contributors)
-</br>
-</br>
-</br>
+
 ## 1. Project Overview
 ### 소개
 - Retriever Task와 Reader Task를 구성하고 통합하여, 질문을 던졌을 때 답변을 해주는 ODQA 시스템 개발
@@ -45,13 +43,12 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ```
 ### 데이터 소개
 
-아래는 대회에서 사용한 데이터셋의 분포를 보여줍니다.
+아래는 대회에서 사용한 데이터셋의 구성을 보여줍니다.
 
-![데이터셋 ](https://user-images.githubusercontent.com/38339347/168778410-a1a23406-16ef-4d7d-b49e-e94f09267448.png)
+![데이터셋](https://user-images.githubusercontent.com/38339347/168778410-a1a23406-16ef-4d7d-b49e-e94f09267448.png)
 
 
-데이터셋은 편의성을 위해 Huggingface 에서 제공하는 datasets를 이용하여 pyarrow 형식의 데이터로 저장되어있습니다. 다음은 데이터셋의 구성입니다.
-
+MRC 대회에서 기본적으로 제공한 데이터셋은 편의성을 위해 Huggingface 에서 제공하는 datasets를 이용하여 pyarrow 형식의 데이터로 저장되어 있습니다. 다음은 `./data` 구조입니다.
 ```bash
 ./data/                        # 전체 데이터
     ./train_dataset/           # 학습에 사용할 데이터셋. train 과 validation 으로 구성 
@@ -60,6 +57,10 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
 ```
 
 data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 확인 가능합니다. 
+
+본 대회에서 사용한 외부데이터셋은 아래 링크에서 다운받을 수 있습니다. 
+- [ko_wiki_v1_squad](https://aihub.or.kr/aidata/84)
+- [KorQuAD v1.0](https://korquad.github.io/KorQuad%201.0/)
 
 ## 3. Solutions
 ### **Retriever**
