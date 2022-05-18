@@ -80,6 +80,12 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 
 ## 3. Solutions
 ### **Retriever**
+
+#### **Spasrse retriever**
+- TF-IDF, BM25 등 스코어 함수들을 사용하여 Sparse retriever를 구현했습니다.
+- 'klue/roberta-large', 'klue/roberta-large', 'monologg/koelectra-base-v3-discriminator', 'Mecab' 와 같은 tokenizer 와 스코어 함수들의 조합을 실험했습니다. 
+- Elasticsearch를 사용하여 (nori-tokenizer, BM25) Sparse retriever를 구현했습니다. 
+
 #### **Data Preprocessing**
 - DPR 모델에 입력으로 들어가기 위하여 Data 중 Context Data에 preprocessing을 하였습니다.
     - Sparse Retrieval의 TF-IDF 및 BM25에서는 문장의 길이에 제한이 없는 반면에, DPR에서 encoder에 사용되는 klue/roberta-large 모델의 경우, 최대 입력받을 수 있는 문장의 길이가 512임. 이에 따라 문장의 길이를 줄여주었습니다..
@@ -125,6 +131,9 @@ Retriever, Reader 각각의 고도화를 마친 후 통합하여 inference를 �
 
 ## 4. Results
 ### Retriever
+BM25+Mecab → Accuracy : 0.9365  
+ElasticSearch → Accuracy : 0.9503
+
 ### Reader
 #### **Data Augmentation**
 EM 39.5800 → 45.8300
@@ -157,7 +166,6 @@ bash ./install/install_requirements.sh
 ```
 ### Retriever
 
-### Retriever 
 #### train/evaluate Sparse Retriever
 ```./config/retrieval_config.json```을 기준으로 Sparse Retriever 를 생성 및 평가합니다.  
 ```python
@@ -226,7 +234,7 @@ python train_data_aug.py --output_dir ./models/train_dataset --do_train --korqua
 python train_data_aug.py --output_dir ./models/train_dataset --do_train --ko_wiki --korquad
 ```
 
-#### eval (MRC)
+#### eval
 
 MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 예시에 단순히 `--do_eval` 을 추가로 입력해서 훈련 및 평가를 동시에 진행할 수도 있습니다.
 
@@ -234,6 +242,8 @@ MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 
 # mrc 모델 평가 (train_dataset 사용)
 python train_data_aug.py --output_dir ./outputs/train_dataset --model_name_or_path ./models/train_dataset/ --do_eval 
 ```
+
+### Retriever + Reader
 
 #### eval (Sparse Retriever/Elasticsearch Retriever + MRC)
 retriever 와 mrc 모델로 end-to-end 평가를 합니다.
