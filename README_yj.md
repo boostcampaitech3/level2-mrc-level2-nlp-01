@@ -4,7 +4,7 @@
 1. [Project Overview](#1-project-overview)
 2. [Architecture](#2-architecture)
 3. [Solutions](#3-solutions)
-4. [Reuslts](#4-results)
+4. [Results](#4-results)
 5. [Usages](#5-usages)
 6. [Contributors](#6-contributors)
 
@@ -17,9 +17,7 @@
     - 지문이 주어진 상황에서 질의에 대해 응답하는 기계 독해 Task
 - Open-Domain Question Answering(ODQA)
     - Retriever 와 MRC Task를 결합한 시스템
-- P stage 3 대회를 위한 베이스라인 
-
-### 파일 구조
+- P stage 3 대회를 위한 베이스라인
 
 ### 평가 방법
 #### EM(Exact Match)
@@ -88,12 +86,12 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 
 #### **Data Preprocessing**
 - DPR 모델에 입력으로 들어가기 위하여 Data 중 Context Data에 preprocessing을 하였습니다.
-    - Sparse Retrieval의 TF-IDF 및 BM25에서는 문장의 길이에 제한이 없는 반면에, DPR에서 encoder에 사용되는 klue/roberta-large 모델의 경우, 최대 입력받을 수 있는 문장의 길이가 512임. 이에 따라 문장의 길이를 줄여주었습니다..
+    - Sparse Retrieval의 TF-IDF 및 BM25에서는 문장의 길이에 제한이 없는 반면에, DPR에서 encoder에 사용되는 klue/roberta-large 모델의 경우, 최대 입력받을 수 있는 문장의 길이가 512임. 이에 따라 문장의 길이를 줄여주었습니다.
     - Context 내에 answer가 있는 부분을 기준으로 문장 내의 글자 개수가 최대 600개가 되게 문장이 잘라지도록 하였습니다.
 
 #### **DPR retriever**
-- In-Batch Negative: question과 positive sentence로 이루어진 mini-batch 내부에서 다른 example들 사이에서 내적을 통하여 Prediction Score Matrix를 구했습니다..
-- Batch-size는 8로 하여 훈련을 진행하였음. 즉, 질문 1개 당 8개의 문장 중 positive sentence 1개를 찾도록 훈련되었습니다..
+- In-Batch Negative: question과 positive sentence로 이루어진 mini-batch 내부에서 다른 example들 사이에서 내적을 통하여 Prediction Score Matrix를 구했습니다.
+- Batch-size는 8로 하여 훈련을 진행하였음. 즉, 질문 1개 당 8개의 문장 중 positive sentence 1개를 찾도록 훈련되었습니다.
 
 ### **Reader**
 #### **Main Model 선정**
