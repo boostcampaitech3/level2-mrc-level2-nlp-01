@@ -158,14 +158,18 @@ bash ./install/install_requirements.sh
 ### Retriever
 
 ### Retriever 
-### 4-1. Train/Evaluate Sparse Retriever
+#### train/evaluate Sparse Retriever
+```./config/retrieval_config.json```을 기준으로 Sparse Retriever 를 생성 및 평가합니다.  
 ```python
 # Sparse Retriever 생성 및 평가  
 # retriever configuration : ./config/retrieval_config.json 에 따라 
 # 저장 경로 : './retriver_results/{MODELNAME}' 
 python retrieval_sparse.py --config_retriever ./config/retrieval_config.json
 ```
-### 4-2. Train/Evaluate Elasticsearch Retriever
+
+#### train/evaluate Elasticsearch Retriever
+```./config/elasticsearch_config.json```을 기준으로 Elasticsearch index 를 구축합니다.  
+이후 구축한 Elasticsearch index 기준으로 문서를 추출 및 평가합니다. 
 ```python
 # elasticsearch set-up
 python retrieval_elasticsearch_setup.py --config_elasticsearch ./config/elasticsearch_config.json
@@ -222,7 +226,7 @@ python train_data_aug.py --output_dir ./models/train_dataset --do_train --korqua
 python train_data_aug.py --output_dir ./models/train_dataset --do_train --ko_wiki --korquad
 ```
 
-#### eval
+#### eval (MRC)
 
 MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 예시에 단순히 `--do_eval` 을 추가로 입력해서 훈련 및 평가를 동시에 진행할 수도 있습니다.
 
@@ -231,29 +235,63 @@ MRC 모델의 평가는(`--do_eval`) 따로 설정해야 합니다.  위 학습 
 python train_data_aug.py --output_dir ./outputs/train_dataset --model_name_or_path ./models/train_dataset/ --do_eval 
 ```
 
-#### inference
+#### eval (Sparse Retriever/Elasticsearch Retriever + MRC)
+retriever 와 mrc 모델로 end-to-end 평가를 합니다.
+```python
+# Sparse Retriever + MRC - train data 평가
+python inference_sparse.py --output_dir ./result \
+        --dataset_name ../data/train_dataset \
+        --model_name_or_path {MRC_MODEL_PATH} \
+        --retriever_path {RETRIEVER_MODEL_PATH} \
+        --do_eval \
+        --top_k_retrieval 20 \
+        --overwrite_output_dir
+        --answer_postprocessing False \
+        --per_device_eval_batch_size 32 \
+        --max_seq_length 512
 
-retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
-
-* 학습한 모델의  test_dataset에 대한 결과를 제출하기 위해선 추론(`--do_predict`)만 진행하면 됩니다. 
-
-* 학습한 모델이 train_dataset 대해서 ODQA 성능이 어떻게 나오는지 알고 싶다면 평가(`--do_eval`)를 진행하면 됩니다.
-
-```bash
-# ODQA 실행 (test_dataset 사용)
-# wandb 가 로그인 되어있다면 자동으로 결과가 wandb 에 저장됩니다. 아니면 단순히 출력됩니다
-python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/test_dataset/ --model_name_or_path ./models/train_dataset/ --do_predict
+# Elasticsearch + MRC 평가 - train data 평가
+python inference_elasticsearch.py --output_dir ./result \
+        --dataset_name ../data/train_dataset \
+        --model_name_or_path {MRC_MODEL_PATH} \
+        --retriever_path Elasticsearch \
+        --index_name wikipedia_documents \
+        --do_eval \
+        --top_k_retrieval 30 \
+        --overwrite_output_dir \
+        --answer_postprocessing False \
+        --per_device_eval_batch_size 32 \
+        --max_seq_length 512
 ```
 
+#### inference (Sparse Retriever/Elasticsearch Retriever + MRC)
+retriever 와 mrc 모델로 end-to-end test data에 대해 inference를 합니다.
+```python
+# Sparse Retriever + MRC 평가 - test data inference
+python inference_sparse.py --output_dir ./result \
+       --dataset_name ../data/test_dataset \
+       --model_name_or_path {MRC_MODEL_PATH} \
+       --retriever_path {RETRIEVER_MODEL_PATH} \
+       --do_predict \
+       --top_k_retrieval 30 \
+       --overwrite_output_dir \
+       --answer_postprocessing False \
+       --per_device_eval_batch_size 32 \
+       --max_seq_length 512
 
-```bash
-# train_dataset의 'validation' set으로 평가
-python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/train_dataset/ --model_name_or_path ./models/train_dataset/ --do_eval
+# Elasticsearch + MRC 평가 - test data inference
+python inference_elasticsearch.py --output_dir ./result \
+        --dataset_name ../data/test_dataset \
+        --model_name_or_path {MRC_MODEL_PATH} \
+        --retriever_path Elasticsearch \
+        --index_name wikipedia_documents \
+        --do_predict \
+        --top_k_retrieval 30 \
+        --overwrite_output_dir \
+        --answer_postprocessing False \
+        --per_device_eval_batch_size 32 \
+        --max_seq_length 512
 ```
-
-#### How to submit
-
-`inference.py` 파일을 위 예시처럼 `--do_predict` 으로 실행하면 `--output_dir` 위치에 `predictions.json` 이라는 파일이 생성됩니다. 해당 파일을 제출해주시면 됩니다.
 
 #### Ensemble(soft-voting)
 `soft_voting.py`와 arguments를 이용하여 ensemble을 진행할 수 있습니다. 각 모델 inference 시 생성되는 `nbest_predictions.json`(not `predictions.json`)을 모아놓은 디렉토리를 `--cand_dir` argument로 입력하면 됩니다.
