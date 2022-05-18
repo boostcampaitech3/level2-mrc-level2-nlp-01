@@ -1,5 +1,7 @@
 ![image](https://user-images.githubusercontent.com/82494506/168751972-956f972a-c4d9-45c5-84e1-edd5bd9d1279.png)
 
+[3등 솔루션 공유 발표자료](https://github.com/boostcampaitech3/level2-mrc-level2-nlp-01/blob/main/assets/MRC%203%EB%93%B1%20%EC%86%94%EB%A3%A8%EC%85%98%20%EA%B3%B5%EC%9C%A0.pptx.pdf)
+
 ## Index
 1. [Project Overview](#1-project-overview)
 2. [Architecture](#2-architecture)
