@@ -1,12 +1,12 @@
 ![image](https://user-images.githubusercontent.com/82494506/168751972-956f972a-c4d9-45c5-84e1-edd5bd9d1279.png)
 
 ## Index
-1. [Project Overview](#1.-Project-Overview)
-2. [Architecture](#2.-Architecture)
-3. [Solutions](#3.-Soulution)
-4. [Reuslts](#4.-Result,-Usage)
-5. [Usages](#5.-Usage)
-6. [Contributors](#6.-Contributors)
+1. [Project Overview](1.-Project-Overview)
+2. [Architecture](2.-Architecture)
+3. [Solutions](3.-Soulution)
+4. [Reuslts](4.-Result,-Usage)
+5. [Usages](5.-Usage)
+6. [Contributors](6.-Contributors)
 ## 1. Project Overview
 ### 소개
 - Retriever Task와 Reader Task를 구성하고 통합하여, 질문을 던졌을 때 답변을 해주는 ODQA 시스템 개발
