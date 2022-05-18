@@ -23,21 +23,35 @@
 - P stage 3 대회를 위한 베이스라인 
 </br> 
 
-### 파일 구
+### 파일 구조
 
 #### 저장소 구조
 
 ```bash
-./assets/                # readme 에 필요한 이미지 저장
-./install/               # 요구사항 설치 파일 
-./data/                  # 전체 데이터. 아래 상세 설명
-retrieval.py             # sparse retreiver 모듈 제공 
-arguments.py             # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
-trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
-utils_qa.py              # 기타 유틸 함수 제공 
+.
+├── README.md
+├── arguments.py
+├── assets                                # readme 에 필요한 이미지 저장
+├── config                                # retriever config directory
+├── dpr                                   # Dense Passage Retriever module 
+├── inference.py                          # 대회 베이스 라인 ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성 
+├── inference_elasticsearch.py            # elasticsearch ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성 
+├── inference_sparse.py                   # sparseretriever ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성 
+├── install                               # 요구사항 설치 파일 
+├── jupyternote_books                     # experimental jupyter notebook directory 
+├── requirements.txt
+├── retrieval.py                          # baseline - sparse retriever 
+├── retrieval_elasticsearch.py            # elasticsearch retriever  모듈 평가 및 실행 
+├── retrieval_elasticsearch_setup.py      # elasticsearch set-up 파일 
+├── retrieval_sparse.py                   # sparse retriever 모듈 평가 및 실행  
+├── retriever                             # retriever 모듈
+├── retriever_result                      # retriever result directory 
+├── train.py                              # 대회 베이스라인 MRC, Retrieval 모델 학습 및 평가 
+├── train_data_aug.py                     # MRC, Retrieval 모델 학습 및 평가 
+├── trainer_qa.py                         # MRC 모델 학습에 필요한 trainer 제공
+├── utils                                 # 유틸함수 모듈 
+└── utils_qa.py                           # train_qa 기타 유틸 함수 제공 
 
-train.py                 # MRC, Retrieval 모델 학습 및 평가 
-inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
 ```
 </br>
 
