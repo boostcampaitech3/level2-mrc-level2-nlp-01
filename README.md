@@ -320,9 +320,8 @@ python soft_voting.py --cand_dir ./ensemble
 3. `./outputs/` 폴더 또한 `--overwrite_output_dir` 을 추가하지 않으면 같은 폴더에 저장되지 않습니다.
 
 ## 6. Contributors
-- 강범서_T3002 : https://github.com/Kang-Beom-Seo
-- 오필훈_T3127 : https://github.com/philhoonoh
-- 이예진_T3158 : https://github.com/leeyejin1231
-- 한기백_T3232 : https://github.com/ivorrr987
-- 정유리_T3242 : https://github.com/hummingeel
+### boostcamp AI tech 3th, nlp-01 대답해조
 
+|                      Kang-Beom-Seo                       |                philhoonoh                |                Yejin Lee                |                Ellie J.                |                한기백                |
+| :---------------------------------------------: | :----------------------------------: | :------------------------------: | :------------------------------------: | :------------------------------------: |
+|<img src="https://avatars.githubusercontent.com/u/79088141?v=4" alt="Kang-Beom-Seo" width="100" height="100">|<img src="https://avatars.githubusercontent.com/u/97495017?v=4" alt="philhoonoh" width="100" height="100">|<img src="https://avatars.githubusercontent.com/u/82494506?v=4" alt="leeyejin1231" width="100" height="100">|<img src="https://avatars.githubusercontent.com/u/79218038?v=4" alt="ivorrr987" width="100" height="100">|<img src="https://avatars.githubusercontent.com/u/38339347?v=4" alt="hummingeel" width="100" height="100"> | [Kang-Beom-Seo](https://github.com/Kang-Beom-Seo) | [philhoonoh(http://github.com/philhoonoh)| [leeyejin1231](http://github.com/leeyejin1231) | [ivorrr987](http://github.com/ivorrr987) | [hummingeel](http://github.com/hummingeel) |
